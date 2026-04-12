@@ -3,13 +3,26 @@ export type ThemeMode = 'light' | 'dark'
 const hasWindow = typeof window !== 'undefined'
 const hasDocument = typeof document !== 'undefined'
 
-export const readJSONStorage = <T>(key: string, fallback: T): T => {
-  if (!hasWindow) {
-    return fallback
+const getSafeStorage = (): Storage | null => {
+  if (!hasWindow) return null
+  try {
+    const storage = window.localStorage
+    const x = '__storage_test__'
+    storage.setItem(x, x)
+    storage.removeItem(x)
+    return storage
+  } catch (e) {
+    return null
   }
+}
+
+const safeStorage = getSafeStorage()
+
+export const readJSONStorage = <T>(key: string, fallback: T): T => {
+  if (!safeStorage) return fallback
 
   try {
-    const rawValue = window.localStorage.getItem(key)
+    const rawValue = safeStorage.getItem(key)
     return rawValue ? JSON.parse(rawValue) as T : fallback
   } catch {
     return fallback
@@ -17,36 +30,30 @@ export const readJSONStorage = <T>(key: string, fallback: T): T => {
 }
 
 export const writeJSONStorage = <T>(key: string, value: T): void => {
-  if (!hasWindow) {
-    return
-  }
+  if (!safeStorage) return
 
   try {
-    window.localStorage.setItem(key, JSON.stringify(value))
+    safeStorage.setItem(key, JSON.stringify(value))
   } catch {
     // Ignore environments that block storage access.
   }
 }
 
 export const readStringStorage = (key: string, fallback: string): string => {
-  if (!hasWindow) {
-    return fallback
-  }
+  if (!safeStorage) return fallback
 
   try {
-    return window.localStorage.getItem(key) || fallback
+    return safeStorage.getItem(key) || fallback
   } catch {
     return fallback
   }
 }
 
 export const writeStringStorage = (key: string, value: string): void => {
-  if (!hasWindow) {
-    return
-  }
+  if (!safeStorage) return
 
   try {
-    window.localStorage.setItem(key, value)
+    safeStorage.setItem(key, value)
   } catch {
     // Ignore environments that block storage access.
   }
@@ -55,9 +62,7 @@ export const writeStringStorage = (key: string, value: string): void => {
 export const readThemeMode = (): ThemeMode => {
   const fallback: ThemeMode = 'light'
 
-  if (!hasWindow) {
-    return fallback
-  }
+  if (!hasWindow) return fallback
 
   try {
     const storedTheme = readStringStorage('theme', '') as ThemeMode | ''
@@ -76,9 +81,7 @@ export const readThemeMode = (): ThemeMode => {
 }
 
 export const applyTheme = (theme: ThemeMode): void => {
-  if (!hasDocument) {
-    return
-  }
+  if (!hasDocument) return
 
   try {
     document.documentElement.setAttribute('data-theme', theme)
