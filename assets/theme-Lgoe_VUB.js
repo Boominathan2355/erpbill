@@ -1,0 +1,1 @@
+import{k as e,z as t}from"./runtime-core.esm-bundler-kFOA8BaL.js";import{n}from"./pinia-ZRcbBx0b.js";import{a as r,r as i,t as a}from"./browserStorage-k8eYQFUL.js";var o=n(`theme`,()=>{let n=t(i());return e(n,e=>{a(e),r(`theme`,e)},{immediate:!0}),{theme:n,toggleTheme:()=>{n.value=n.value===`light`?`dark`:`light`}}});export{o as t};

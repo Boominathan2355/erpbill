@@ -1,0 +1,1 @@
+var e=(e,t=`INR`)=>{let n=t===`INR`?`en-IN`:`en-US`;return new Intl.NumberFormat(n,{style:`currency`,currency:t,maximumFractionDigits:2}).format(e)},t=e=>new Intl.DateTimeFormat(`en-IN`,{day:`2-digit`,month:`2-digit`,year:`numeric`}).format(new Date(e)),n=()=>Math.random().toString(36).substring(2,9);export{t as n,n as r,e as t};
