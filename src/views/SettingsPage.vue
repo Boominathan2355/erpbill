@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useSettingsStore } from '../stores/settings'
+import { useAuthStore } from '../stores/auth'
 import { INDIAN_STATES } from '../utils/constants'
 import BaseButton from '../components/atoms/BaseButton.vue'
 import BaseInput from '../components/atoms/BaseInput.vue'
 import AppIcon from '../components/atoms/AppIcon.vue'
+import BusinessSettings from '../components/organisms/BusinessSettings.vue'
 
+const authStore = useAuthStore()
 const settingsStore = useSettingsStore()
 const isSuccess = ref(false)
 
@@ -25,6 +28,11 @@ onMounted(() => {
   form.value = { ...settingsStore.profile }
   taxInclusivePref.value = settingsStore.taxInclusive
 })
+
+// Update form when business switches
+watch(() => settingsStore.profile, (newProfile) => {
+  form.value = { ...newProfile }
+}, { deep: true })
 </script>
 
 <template>
@@ -38,6 +46,12 @@ onMounted(() => {
     </header>
 
     <div class="settings-layout">
+      <!-- 0. Multiple Businesses (Client Admin Only) -->
+      <section v-if="authStore.currentUserRole.includes('Client Admin')" class="settings-card glass-card no-padding mb-5">
+        <BusinessSettings />
+        <div class="divider"></div>
+      </section>
+
       <!-- 1. General Identity -->
       <section class="settings-card glass-card">
         <div class="card-header">
@@ -142,6 +156,9 @@ onMounted(() => {
 
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-lg); }
 .full-width { grid-column: span 2; }
+
+.no-padding { padding: 0 !important; border: none; background: transparent; box-shadow: none; }
+.divider { height: 1px; background: var(--border-color); margin: var(--spacing-xxl) 0; }
 
 /* Custom Select Styling */
 .input-label { display: block; font-size: 0.875rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }

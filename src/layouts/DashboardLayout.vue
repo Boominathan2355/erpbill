@@ -3,17 +3,21 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useThemeStore } from '../stores/theme'
 import { useAuthStore } from '../stores/auth'
+import { useBusinessStore } from '../stores/business'
 import AppIcon from '../components/atoms/AppIcon.vue'
 import BaseButton from '../components/atoms/BaseButton.vue'
 import CommandPalette from '../components/organisms/CommandPalette.vue'
 
 const themeStore = useThemeStore()
 const authStore = useAuthStore()
+const businessStore = useBusinessStore()
 const router = useRouter()
 const isCollapsed = ref(false)
 const isCommandPaletteOpen = ref(false)
 const isAccountMenuOpen = ref(false)
+const isBusinessMenuOpen = ref(false)
 const accountMenuRef = ref<HTMLElement | null>(null)
+const businessMenuRef = ref<HTMLElement | null>(null)
 
 const toggleTheme = () => themeStore.toggleTheme()
 const toggleAccountMenu = () => {
@@ -30,6 +34,9 @@ const handleLogout = () => {
 const handleClickOutside = (event: MouseEvent) => {
   if (accountMenuRef.value && !accountMenuRef.value.contains(event.target as Node)) {
     isAccountMenuOpen.value = false
+  }
+  if (businessMenuRef.value && !businessMenuRef.value.contains(event.target as Node)) {
+    isBusinessMenuOpen.value = false
   }
 }
 
@@ -102,6 +109,16 @@ const commandActions = computed(() => {
       keywords: ['items', 'catalog', 'stock'],
       to: '/products',
       module: 'Products'
+    },
+    {
+      id: 'books',
+      label: 'Open Books & Finance',
+      description: 'Review income, expenses, and cash flow analytics',
+      icon: 'file-text' as const,
+      group: 'Navigation',
+      keywords: ['finance', 'accounting', 'ledger', 'profit'],
+      to: '/books',
+      module: 'Finance'
     },
     {
       id: 'reports',
@@ -224,6 +241,10 @@ onBeforeUnmount(() => {
           <AppIcon name="box" />
           <span v-show="!isCollapsed">Products</span>
         </router-link>
+        <router-link v-if="authStore.canAccess('Finance')" to="/books" class="nav-item" active-class="active" title="Books & Finance">
+          <AppIcon name="file-text" />
+          <span v-show="!isCollapsed">Books</span>
+        </router-link>
         <router-link v-if="authStore.canAccess('Reports')" to="/reports" class="nav-item" active-class="active" title="Reports">
           <AppIcon name="file-text" />
           <span v-show="!isCollapsed">Reports</span>
@@ -257,6 +278,49 @@ onBeforeUnmount(() => {
 
       <header class="app-header glass-card">
         <div class="header-left">
+          <div v-if="authStore.currentUserRole.includes('Client Admin')" class="business-selector-container" ref="businessMenuRef">
+            <button 
+              class="business-selector-btn glass-card" 
+              :class="{ active: isBusinessMenuOpen }"
+              @click="isBusinessMenuOpen = !isBusinessMenuOpen"
+            >
+              <div class="biz-icon">
+                <AppIcon name="home" :size="16" />
+              </div>
+              <div class="biz-info">
+                <span class="biz-name">{{ businessStore.activeBusiness?.name }}</span>
+                <span class="biz-label">Active Business</span>
+              </div>
+              <AppIcon name="menu" :size="16" class="chevron" />
+            </button>
+
+            <transition name="dropdown-fade">
+              <div v-if="isBusinessMenuOpen" class="business-dropdown glass-card">
+                <div class="dropdown-header">
+                  <span class="dropdown-title">Switch Business</span>
+                </div>
+                <div class="biz-list">
+                  <button 
+                    v-for="biz in businessStore.businesses" 
+                    :key="biz.id"
+                    class="biz-item"
+                    :class="{ active: biz.id === businessStore.activeBusinessId }"
+                    @click="businessStore.switchBusiness(biz.id)"
+                  >
+                    <div class="biz-item-icon">
+                      <AppIcon :name="biz.id === businessStore.activeBusinessId ? 'check' : 'home'" :size="14" />
+                    </div>
+                    <span>{{ biz.name }}</span>
+                  </button>
+                </div>
+                <div class="dropdown-divider"></div>
+                <button class="dropdown-item add-biz" @click="router.push('/settings')">
+                  <AppIcon name="plus" :size="16" />
+                  <span>Manage Businesses</span>
+                </button>
+              </div>
+            </transition>
+          </div>
           <h2 class="page-title">{{ $route.meta.title || 'Dashboard' }}</h2>
         </div>
 
@@ -538,6 +602,128 @@ onBeforeUnmount(() => {
 .header-left {
   display: flex;
   align-items: center;
+  gap: var(--spacing-xl);
+}
+
+.business-selector-container {
+  position: relative;
+}
+
+.business-selector-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: 6px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 200px;
+  text-align: left;
+}
+
+.business-selector-btn:hover, .business-selector-btn.active {
+  border-color: var(--color-primary);
+  background: var(--bg-app);
+}
+
+.biz-icon {
+  width: 32px;
+  height: 32px;
+  background: var(--color-primary-glow);
+  color: var(--color-primary);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.biz-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.biz-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.2;
+}
+
+.biz-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.business-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 240px;
+  z-index: 100;
+  padding: var(--spacing-sm);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.biz-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.biz-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: transparent;
+  color: var(--text-main);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  text-align: left;
+}
+
+.biz-item:hover {
+  background: var(--bg-app);
+  color: var(--color-primary);
+}
+
+.biz-item.active {
+  background: var(--color-primary-glow);
+  color: var(--color-primary);
+}
+
+.biz-item-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.add-biz {
+  color: var(--color-primary) !important;
+}
+
+.chevron {
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+.active .chevron {
+  transform: rotate(180deg);
 }
 
 .page-title {

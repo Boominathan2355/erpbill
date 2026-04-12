@@ -81,6 +81,41 @@ export interface BusinessProfile {
 
 export type PermissionLevel = 'Full' | 'Read' | 'None'
 
+export type TransactionType = 'income' | 'expense'
+export type PaymentMethod = 'Cash' | 'Bank' | 'UPI' | 'Card'
+
+export interface Transaction {
+  id: string
+  date: number
+  type: TransactionType
+  category: string
+  amount: number
+  description: string
+  referenceId?: string
+  paymentMethod: PaymentMethod
+  status: 'completed' | 'pending'
+}
+
+export const INCOME_CATEGORIES = [
+  'Sales',
+  'Services',
+  'Interests',
+  'Refunds',
+  'Other Income'
+]
+
+export const EXPENSE_CATEGORIES = [
+  'Rent',
+  'Utilities',
+  'Salary',
+  'Office Supplies',
+  'Travel',
+  'Marketing',
+  'Software/Subscriptions',
+  'Taxes',
+  'Other Expenses'
+]
+
 export interface Role {
   id: number
   name: string
@@ -92,4 +127,10 @@ export interface PermissionRow {
   super: PermissionLevel
   client: PermissionLevel
   finance: PermissionLevel
+}
+
+export interface Business {
+  id: string
+  name: string
+  profile: BusinessProfile
 }

@@ -23,6 +23,7 @@ export const useAuthStore = defineStore('auth', () => {
       { module: 'Settings', super: 'Full', client: 'Full', finance: 'None' },
       { module: 'Audit Logs', super: 'Full', client: 'None', finance: 'None' },
       { module: 'Role Management', super: 'Full', client: 'None', finance: 'None' },
+      { module: 'Finance', super: 'Full', client: 'Full', finance: 'Full' },
     ])
   )
 

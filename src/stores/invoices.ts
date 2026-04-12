@@ -2,9 +2,13 @@ import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import type { Invoice } from '../types'
 import { readJSONStorage, writeJSONStorage } from '../utils/browserStorage'
+import { useTransactionStore } from './transactions'
+import { useBusinessStore } from './business'
 
 export const useInvoiceStore = defineStore('invoices', () => {
-  const invoices = ref<Invoice[]>(readJSONStorage<Invoice[]>('invoices', []))
+  const businessStore = useBusinessStore()
+  const storageKey = `invoices_${businessStore.activeBusinessId}`
+  const invoices = ref<Invoice[]>(readJSONStorage<Invoice[]>(storageKey, []))
 
   const saveInvoice = (invoice: Invoice) => {
     const index = invoices.value.findIndex(i => i.id === invoice.id)
@@ -22,7 +26,23 @@ export const useInvoiceStore = defineStore('invoices', () => {
   const updateStatus = (id: string, status: Invoice['status']) => {
     const invoice = invoices.value.find(i => i.id === id)
     if (invoice) {
+      const oldStatus = invoice.status
       invoice.status = status
+
+      // Log transaction if newly paid
+      if (status === 'paid' && oldStatus !== 'paid') {
+        const transactionStore = useTransactionStore()
+        transactionStore.addTransaction({
+          date: Date.now(),
+          type: 'income',
+          category: 'Sales',
+          amount: invoice.totalAmount,
+          description: `Payment for Invoice ${invoice.invoiceNumber}`,
+          referenceId: invoice.id,
+          paymentMethod: 'Bank', // Default
+          status: 'completed'
+        })
+      }
     }
   }
 
@@ -37,7 +57,7 @@ export const useInvoiceStore = defineStore('invoices', () => {
 
   // Persist to localStorage
   watch(invoices, (newInvoices) => {
-    writeJSONStorage('invoices', newInvoices)
+    writeJSONStorage(storageKey, newInvoices)
   }, { deep: true })
 
   return { 

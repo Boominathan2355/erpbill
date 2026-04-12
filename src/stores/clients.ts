@@ -2,9 +2,13 @@ import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import type { Client } from '../types'
 import { readJSONStorage, writeJSONStorage } from '../utils/browserStorage'
+import { useBusinessStore } from './business'
 
+// Store for managing client entities
 export const useClientStore = defineStore('clients', () => {
-  const clients = ref<Client[]>(readJSONStorage<Client[]>('clients', []))
+  const businessStore = useBusinessStore()
+  const storageKey = `clients_${businessStore.activeBusinessId}`
+  const clients = ref<Client[]>(readJSONStorage<Client[]>(storageKey, []))
 
   const addClient = (client: Omit<Client, 'id' | 'createdAt'>) => {
     const newClient: Client = {
@@ -39,7 +43,7 @@ export const useClientStore = defineStore('clients', () => {
 
   // Persist to localStorage
   watch(clients, (newClients) => {
-    writeJSONStorage('clients', newClients)
+    writeJSONStorage(storageKey, newClients)
   }, { deep: true })
 
   return { clients, addClient, updateClient, deleteClient }

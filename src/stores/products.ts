@@ -2,9 +2,13 @@ import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import type { Product } from '../types'
 import { readJSONStorage, writeJSONStorage } from '../utils/browserStorage'
+import { useBusinessStore } from './business'
 
+// Store for managing product and service listings
 export const useProductStore = defineStore('products', () => {
-  const products = ref<Product[]>(readJSONStorage<Product[]>('products', []))
+  const businessStore = useBusinessStore()
+  const storageKey = `products_${businessStore.activeBusinessId}`
+  const products = ref<Product[]>(readJSONStorage<Product[]>(storageKey, []))
 
   const addProduct = (product: Omit<Product, 'id'>) => {
     const newProduct: Product = {
@@ -32,7 +36,7 @@ export const useProductStore = defineStore('products', () => {
 
   // Persist to localStorage
   watch(products, (newProducts) => {
-    writeJSONStorage('products', newProducts)
+    writeJSONStorage(storageKey, newProducts)
   }, { deep: true })
 
   return { products, addProduct, updateProduct, deleteProduct }

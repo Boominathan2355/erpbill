@@ -14,29 +14,28 @@ class InMemoryStorage implements Storage {
 }
 
 const getSafeStorage = (): Storage => {
-  if (!hasWindow) return new InMemoryStorage()
+  const fallback = new InMemoryStorage()
+  if (!hasWindow) return fallback
   
   try {
-    // Specifically handle the case where window.localStorage access itself throws
-    // in some browsers (like Chrome with "Block third-party cookies" enabled)
+    // Check if localStorage is even defined
+    if (typeof window.localStorage === 'undefined') return fallback
+
     const storage = window.localStorage
-    if (!storage) return new InMemoryStorage()
+    if (!storage) return fallback
 
     // Test for actual usability (handles "Access to storage is not allowed")
-    // Use a unique key to avoid collisions
     const x = `__storage_test_${Math.random()}_`
     storage.setItem(x, x)
     const result = storage.getItem(x)
     storage.removeItem(x)
     
-    if (result !== x) return new InMemoryStorage()
+    if (result !== x) return fallback
     
     return storage
   } catch (e) {
-    // This catches "SecurityError: The operation is insecure" 
-    // and "Access to storage is not allowed" errors
     console.warn('LocalStorage is blocked or unavailable. Falling back to in-memory storage.', e)
-    return new InMemoryStorage()
+    return fallback
   }
 }
 

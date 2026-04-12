@@ -73,6 +73,12 @@ const router = createRouter({
           name: 'invoice-builder',
           component: () => import('../views/InvoiceBuilderPage.vue'),
           meta: { title: 'Create Invoice', module: 'Invoices' }
+        },
+        {
+          path: 'books',
+          name: 'books',
+          component: () => import('../views/BooksDashboardPage.vue'),
+          meta: { title: 'Books & Finance', module: 'Finance' }
         }
       ]
     }
