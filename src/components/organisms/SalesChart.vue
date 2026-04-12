@@ -21,23 +21,33 @@ const initChart = () => {
   updateChart()
 }
 
+const getCSSVar = (name: string) => {
+  if (typeof window === 'undefined') return ''
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+}
+
 const updateChart = () => {
   if (!chart) return
 
   const data = getChartData()
+  const primaryColor = getCSSVar('--color-primary') || '#6366f1'
+  const primaryGlow = getCSSVar('--color-primary-glow') || 'rgba(99, 102, 241, 0.2)'
+  const textColor = getCSSVar('--text-main') || '#f8fafc'
+  const textMuted = getCSSVar('--text-muted') || '#94a3b8'
+  const borderColor = getCSSVar('--border-color') || 'rgba(255, 255, 255, 0.1)'
   
   const option: echarts.EChartsOption = {
     backgroundColor: 'transparent',
     tooltip: {
       trigger: 'axis',
       backgroundColor: themeStore.theme === 'dark' ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-      borderColor: 'var(--border-color)',
-      textStyle: { color: 'var(--text-main)' },
+      borderColor: borderColor,
+      textStyle: { color: textColor },
       formatter: (params: any) => {
         const p = params[0]
         return `<div style="padding: 4px">
           <div style="font-size: 12px; opacity: 0.7">${p.name}</div>
-          <div style="font-size: 16px; font-weight: 800; color: var(--color-primary)">₹${p.value.toLocaleString()}</div>
+          <div style="font-size: 16px; font-weight: 800; color: ${primaryColor}">₹${p.value.toLocaleString()}</div>
         </div>`
       }
     },
@@ -54,12 +64,12 @@ const updateChart = () => {
       data: data.labels,
       axisLine: { show: false },
       axisTick: { show: false },
-      axisLabel: { color: 'var(--text-muted)', fontSize: 11 }
+      axisLabel: { color: textMuted, fontSize: 11 }
     },
     yAxis: {
       type: 'value',
-      splitLine: { lineStyle: { color: 'var(--border-color)', type: 'dashed' } },
-      axisLabel: { color: 'var(--text-muted)', fontSize: 11 }
+      splitLine: { lineStyle: { color: borderColor, type: 'dashed' } },
+      axisLabel: { color: textMuted, fontSize: 11 }
     },
     series: [
       {
@@ -67,17 +77,17 @@ const updateChart = () => {
         type: 'line',
         smooth: true,
         symbol: 'none',
-        lineStyle: { color: 'var(--color-primary)', width: 3 },
+        lineStyle: { color: primaryColor, width: 3 },
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'var(--color-primary-glow)' },
+            { offset: 0, color: primaryGlow },
             { offset: 1, color: 'rgba(99, 102, 241, 0)' }
           ])
         },
         data: data.values,
         emphasis: {
           focus: 'series',
-          itemStyle: { color: 'var(--color-primary)', borderWidth: 2, borderColor: '#fff' }
+          itemStyle: { color: primaryColor, borderWidth: 2, borderColor: '#fff' }
         }
       }
     ]
