@@ -22,10 +22,14 @@ const pendingRevenue = computed(() =>
     .reduce((sum, i) => sum + i.totalAmount, 0)
 )
 
+const totalClientsCount = computed(() => 
+  clientStore.clients.length
+)
+
 const stats = computed(() => [
   { label: 'Total Revenue', value: formatCurrency(totalRevenue.value), icon: 'invoice' as const, color: 'var(--color-primary)' },
   { label: 'Pending Amount', value: formatCurrency(pendingRevenue.value), icon: 'edit' as const, color: 'var(--color-warning)' },
-  { label: 'Total Clients', value: clientStore.clients.length.toString(), icon: 'users' as const, color: 'var(--color-secondary)' }
+  { label: 'Total Clients', value: totalClientsCount.value.toString(), icon: 'users' as const, color: 'var(--color-secondary)' }
 ])
 </script>
 

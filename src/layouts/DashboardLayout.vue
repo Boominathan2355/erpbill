@@ -25,10 +25,9 @@ const toggleAccountMenu = () => {
 }
 
 const handleLogout = () => {
-  // Mock logout
-  console.log('Logging out...')
+  authStore.logout()
   isAccountMenuOpen.value = false
-  // redirect or clear session here
+  router.push('/login')
 }
 
 const handleClickOutside = (event: MouseEvent) => {
@@ -321,6 +320,7 @@ onBeforeUnmount(() => {
               </div>
             </transition>
           </div>
+
           <h2 class="page-title">{{ $route.meta.title || 'Dashboard' }}</h2>
         </div>
 
@@ -384,7 +384,7 @@ onBeforeUnmount(() => {
                   <div class="dropdown-divider"></div>
 
                   <button class="dropdown-item logout-item" @click="handleLogout">
-                    <AppIcon name="menu" :size="18" />
+                    <AppIcon name="box" :size="18" />
                     <span>Log out</span>
                   </button>
                 </div>

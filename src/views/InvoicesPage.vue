@@ -21,13 +21,14 @@ const columns = [
 ]
 
 const tableData = computed(() => {
-  return invoiceStore.invoices.map(invoice => {
-    const client = clientStore.clients.find(c => c.id === invoice.clientId)
-    return {
-      ...invoice,
-      clientName: client ? client.name : 'Unknown Client'
-    }
-  })
+  return invoiceStore.invoices
+    .map(invoice => {
+      const client = clientStore.clients.find(c => c.id === invoice.clientId)
+      return {
+        ...invoice,
+        clientName: client ? client.name : 'Unknown Client'
+      }
+    })
 })
 
 const getBadgeVariant = (status: string) => {

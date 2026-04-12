@@ -5,6 +5,7 @@ import { useClientStore } from '../stores/clients'
 import { useProductStore } from '../stores/products'
 import { useInvoiceStore } from '../stores/invoices'
 import { useSettingsStore } from '../stores/settings'
+import { useAuthStore } from '../stores/auth'
 import { useInvoiceBuilder } from '../composables/useInvoiceBuilder'
 import { formatCurrency } from '../utils/formatters'
 
@@ -21,11 +22,10 @@ const clientStore = useClientStore()
 const productStore = useProductStore()
 const invoiceStore = useInvoiceStore()
 const settingsStore = useSettingsStore()
-
-const workflowStep = ref<'type-selection' | 'editor'>('type-selection')
+const authStore = useAuthStore()
 
 const { invoice, isInterState, addItem, removeItem, calculateTotals } = useInvoiceBuilder(
-  undefined, 
+  { clientType: authStore.currentType } as any, 
   invoiceStore.getNextInvoiceNumber()
 )
 
@@ -43,18 +43,12 @@ const themeColor = computed(() => {
 
 const themeStyles = computed(() => ({
   '--theme-primary': themeColor.value,
-  '--theme-primary-glow': `${themeColor.value}40` // 25% opacity
+  '--theme-primary-glow': `${themeColor.value}40`
 }))
 
 const selectedClient = computed(() => 
   clientStore.clients.find(c => c.id === invoice.value.clientId)
 )
-
-const selectType = (type: 'b2b' | 'b2c' | 'b2e') => {
-  invoice.value.clientType = type
-  invoice.value.clientId = ''
-  workflowStep.value = 'editor'
-}
 
 const handleClientChange = (client: any) => {
   invoice.value.clientId = client.id
@@ -95,71 +89,23 @@ onMounted(() => {
 
 <template>
   <div class="unified-builder-container" :style="themeStyles">
-    <!-- 1. Type Selection Screen -->
-    <Transition name="fast-fade" mode="out-in">
-      <div v-if="workflowStep === 'type-selection'" class="selection-view">
-        <div class="selection-container">
-          <header class="selection-header">
-            <div class="header-badge">New Transaction</div>
-            <h1>Generate Invoice</h1>
-            <p>Choose the correct channel for tax compliance.</p>
-          </header>
-
-          <div class="type-grid">
-            <button class="type-card glass-card ripple" @click="selectType('b2b')">
-              <div class="type-indicator indigo"></div>
-              <div class="icon-box b2b">
-                <AppIcon name="users" :size="32" />
-              </div>
-              <div class="card-body">
-                <h3>B2B</h3>
-                <p>Tax invoice for business entities with GSTIN registration.</p>
-              </div>
-              <div class="card-footer">Select Type <AppIcon name="arrow-left" :size="14" class="rotate-180" /></div>
-            </button>
-
-            <button class="type-card glass-card ripple" @click="selectType('b2c')">
-              <div class="type-indicator emerald"></div>
-              <div class="icon-box b2c">
-                <AppIcon name="box" :size="32" />
-              </div>
-              <div class="card-body">
-                <h3>B2C</h3>
-                <p>Retail bill for consumers or unregistered persons.</p>
-              </div>
-              <div class="card-footer">Select Type <AppIcon name="arrow-left" :size="14" class="rotate-180" /></div>
-            </button>
-
-            <button class="type-card glass-card ripple" @click="selectType('b2e')">
-              <div class="type-indicator violet"></div>
-              <div class="icon-box b2e">
-                <AppIcon name="file-text" :size="32" />
-              </div>
-              <div class="card-body">
-                <h3>B2E / Export</h3>
-                <p>Foreign trade or SEZ supplies (Zero-rated or LUT).</p>
-              </div>
-              <div class="card-footer">Select Type <AppIcon name="arrow-left" :size="14" class="rotate-180" /></div>
-            </button>
-          </div>
-
-          <div class="selection-footer">
-            <button @click="router.back()" class="btn-cancel">Cancel and return</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 2. Main Builder Workspace -->
-      <div v-else class="main-workspace">
-        <header class="workspace-header">
-          <div class="header-left">
-            <button @click="workflowStep = 'type-selection'" class="btn-step-back">
-              <AppIcon name="arrow-left" :size="16" />
-            </button>
+    <div class="main-workspace">
+      <header class="workspace-header">
+        <div class="header-left">
+          <button @click="router.back()" class="btn-step-back">
+            <AppIcon name="arrow-left" :size="16" />
+          </button>
             <div class="type-identity">
-              <span class="type-badge" :class="invoice.clientType">
-                {{ invoice.clientType === 'b2e' ? 'Export' : invoice.clientType?.toUpperCase() }}
-              </span>
+              <div class="local-type-selector glass-card">
+                <button 
+                  v-for="t in (['b2b', 'b2c', 'b2e'] as const)" 
+                  :key="t"
+                  :class="['local-type-btn', { active: invoice.clientType === t }]"
+                  @click="invoice.clientType = t; calculateTotals()"
+                >
+                  {{ t === 'b2e' ? 'Export' : t.toUpperCase() }}
+                </button>
+              </div>
               <span class="invoice-title">New Invoice #{{ invoice.invoiceNumber }}</span>
             </div>
           </div>
@@ -238,9 +184,8 @@ onMounted(() => {
                </div>
              </aside>
           </div>
-        </div>
       </div>
-    </Transition>
+    </div>
 
     <!-- Success Overlay -->
     <Transition name="fast-fade">
@@ -265,61 +210,6 @@ onMounted(() => {
   color: var(--text-main);
 }
 
-/* Selection Screen */
-.selection-view {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 40px;
-}
-
-.selection-container { max-width: 1000px; width: 100%; }
-
-.selection-header { text-align: center; margin-bottom: 48px; }
-.header-badge { display: inline-block; padding: 4px 12px; border-radius: 50px; background: rgba(99, 102, 241, 0.1); color: #6366f1; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 12px; }
-.selection-header h1 { font-size: 2.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px; }
-.selection-header p { color: var(--text-muted); font-size: 1.1rem; }
-
-.type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-
-.type-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  padding: 32px 24px;
-  background: var(--bg-surface-glass);
-  border: 1px solid var(--border-color);
-  text-align: left;
-  border-radius: 20px;
-  overflow: hidden;
-  transition: all 0.2s ease-out;
-}
-
-.type-card:hover { transform: translateY(-4px); border-color: var(--theme-primary); box-shadow: 0 12px 24px rgba(0,0,0,0.1); }
-
-.type-indicator { position: absolute; top: 0; left: 0; right: 0; height: 4px; }
-.type-indicator.indigo { background: #6366f1; }
-.type-indicator.emerald { background: #10b981; }
-.type-indicator.violet { background: #8b5cf6; }
-
-.icon-box {
-  width: 56px; height: 56px; border-radius: 12px;
-  display: flex; justify-content: center; align-items: center;
-  margin-bottom: 24px;
-}
-.icon-box.b2b { background: rgba(99, 102, 241, 0.1); color: #6366f1; }
-.icon-box.b2c { background: rgba(16, 185, 129, 0.1); color: #10b981; }
-.icon-box.b2e { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
-
-.type-card h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 12px; }
-.type-card p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 24px; flex-grow: 1; }
-
-.card-footer { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
-.type-card:hover .card-footer { color: var(--theme-primary); }
-.rotate-180 { transform: rotate(180deg); }
-
-.selection-footer { text-align: center; margin-top: 40px; }
 .btn-cancel { background: transparent; border: none; color: var(--text-muted); cursor: pointer; text-decoration: underline; font-weight: 500; }
 
 /* Workspace UI */
@@ -332,7 +222,37 @@ onMounted(() => {
 .btn-step-back { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border-color); background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); }
 .btn-step-back:hover { background: var(--border-color); color: var(--text-main); }
 
-.type-identity { display: flex; align-items: center; gap: 12px; }
+.type-identity { display: flex; align-items: center; gap: 20px; }
+
+.local-type-selector {
+  display: flex;
+  padding: 3px;
+  background: var(--bg-app);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  gap: 2px;
+}
+
+.local-type-btn {
+  padding: 6px 14px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.local-type-btn:hover { color: var(--text-main); }
+.local-type-btn.active {
+  background: var(--theme-primary);
+  color: white;
+  box-shadow: 0 4px 12px var(--theme-primary-glow);
+}
+
 .type-badge { padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.7rem; color: #fff; }
 .type-badge.b2b { background: #6366f1; }
 .type-badge.b2c { background: #10b981; }
