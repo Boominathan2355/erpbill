@@ -25,10 +25,9 @@ const toggleAccountMenu = () => {
 }
 
 const handleLogout = () => {
-  // Mock logout
-  console.log('Logging out...')
+  authStore.logout()
   isAccountMenuOpen.value = false
-  // redirect or clear session here
+  router.push('/login')
 }
 
 const handleClickOutside = (event: MouseEvent) => {
@@ -321,6 +320,7 @@ onBeforeUnmount(() => {
               </div>
             </transition>
           </div>
+
           <h2 class="page-title">{{ $route.meta.title || 'Dashboard' }}</h2>
         </div>
 
@@ -384,7 +384,7 @@ onBeforeUnmount(() => {
                   <div class="dropdown-divider"></div>
 
                   <button class="dropdown-item logout-item" @click="handleLogout">
-                    <AppIcon name="menu" :size="18" />
+                    <AppIcon name="box" :size="18" />
                     <span>Log out</span>
                   </button>
                 </div>
@@ -596,7 +596,7 @@ onBeforeUnmount(() => {
   height: 64px;
   flex-shrink: 0;
   position: relative;
-  z-index: 50;
+  z-index: 2000;
 }
 
 .header-left {
@@ -665,7 +665,7 @@ onBeforeUnmount(() => {
   top: calc(100% + 8px);
   left: 0;
   width: 240px;
-  z-index: 100;
+  z-index: 2100;
   padding: var(--spacing-sm);
   background: var(--bg-surface);
   box-shadow: var(--shadow-lg);
@@ -787,7 +787,7 @@ onBeforeUnmount(() => {
   top: calc(100% + 8px);
   right: 0;
   width: 260px;
-  z-index: 100;
+  z-index: 2100;
   padding: var(--spacing-sm);
   transform-origin: top right;
   background-color: var(--bg-surface);

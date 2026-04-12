@@ -2,10 +2,19 @@ import { defineStore } from 'pinia'
 import { ref, watch, computed } from 'vue'
 import type { Role, PermissionRow, PermissionLevel } from '../types'
 import { readJSONStorage, writeJSONStorage } from '../utils/browserStorage'
+import type { ClientType } from '../types'
 
 export const useAuthStore = defineStore('auth', () => {
   const currentUserRole = ref<string>(
     readJSONStorage<string>('auth_current_role', 'Super Admin')
+  )
+
+  const currentType = ref<ClientType>(
+    readJSONStorage<ClientType>('auth_current_bill_type', 'b2b')
+  )
+
+  const isLoggedIn = ref<boolean>(
+    readJSONStorage<boolean>('auth_is_logged_in', false)
   )
 
   const roles = ref<Role[]>([
@@ -29,6 +38,18 @@ export const useAuthStore = defineStore('auth', () => {
 
   const setRole = (roleName: string) => {
     currentUserRole.value = roleName
+  }
+
+  const setType = (type: ClientType) => {
+    currentType.value = type
+  }
+
+  const login = () => {
+    isLoggedIn.value = true
+  }
+
+  const logout = () => {
+    isLoggedIn.value = false
   }
 
   const updateMatrix = (newMatrix: PermissionRow[]) => {
@@ -57,11 +78,24 @@ export const useAuthStore = defineStore('auth', () => {
     writeJSONStorage('auth_permissions_matrix', newMatrix)
   }, { deep: true })
 
+  watch(currentType, (newType) => {
+    writeJSONStorage('auth_current_bill_type', newType)
+  })
+
+  watch(isLoggedIn, (newVal) => {
+    writeJSONStorage('auth_is_logged_in', newVal)
+  })
+
   return {
     currentUserRole,
+    currentType,
+    isLoggedIn,
     roles,
     permissionsMatrix,
     setRole,
+    setType,
+    login,
+    logout,
     updateMatrix,
     canAccess
   }

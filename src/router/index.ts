@@ -5,6 +5,12 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      path: '/login',
+      name: 'login',
+      component: () => import('../views/LoginPage.vue'),
+      meta: { title: 'Login' }
+    },
+    {
       path: '/',
       component: () => import('../layouts/DashboardLayout.vue'),
       children: [
@@ -88,13 +94,22 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
   
-  // If route requires a specific module permission
-  if (to.meta.module) {
-    const moduleName = to.meta.module as string
-    if (!authStore.canAccess(moduleName)) {
-      // Redirect to dashboard or a 403 page if they don't have access
-      return next({ name: 'dashboard' })
-    }
+  // 1. Auth Guard: Redirect to login if not authenticated
+  if (to.name !== 'login' && !authStore.isLoggedIn) {
+    return next({ 
+      name: 'login', 
+      query: { redirect: to.fullPath } 
+    })
+  }
+
+  // 2. Prevent logged-in users from seeing the login page
+  if (to.name === 'login' && authStore.isLoggedIn) {
+    return next({ name: 'dashboard' })
+  }
+
+  // 3. Permission Guard: If route requires a specific module permission
+  if (to.meta.module && !authStore.canAccess(to.meta.module as string)) {
+    return next({ name: 'dashboard' })
   }
   
   next()
