@@ -2,11 +2,13 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useThemeStore } from '../stores/theme'
+import { useAuthStore } from '../stores/auth'
 import AppIcon from '../components/atoms/AppIcon.vue'
 import BaseButton from '../components/atoms/BaseButton.vue'
 import CommandPalette from '../components/organisms/CommandPalette.vue'
 
 const themeStore = useThemeStore()
+const authStore = useAuthStore()
 const router = useRouter()
 const isCollapsed = ref(false)
 const isCommandPaletteOpen = ref(false)
@@ -49,116 +51,130 @@ const handleCommandSelect = (action: { to?: string; run?: () => void }) => {
   closeCommandPalette()
 }
 
-const commandActions = computed(() => [
-  {
-    id: 'dashboard',
-    label: 'Go to Dashboard',
-    description: 'View key metrics and recent activity',
-    icon: 'home' as const,
-    group: 'Navigation',
-    keywords: ['home', 'overview', 'summary'],
-    to: '/'
-  },
-  {
-    id: 'invoice-builder',
-    label: 'Create Invoice',
-    description: 'Open the invoice builder for a new bill',
-    icon: 'invoice' as const,
-    group: 'Create',
-    keywords: ['new invoice', 'builder', 'billing'],
-    to: '/invoices/builder'
-  },
-  {
-    id: 'invoices',
-    label: 'Open Invoices',
-    description: 'Review drafts, paid invoices, and overdue items',
-    icon: 'invoice' as const,
-    group: 'Navigation',
-    keywords: ['bills', 'sales', 'documents'],
-    to: '/invoices'
-  },
-  {
-    id: 'clients',
-    label: 'Open Clients',
-    description: 'Manage B2B, B2C, and export customer records',
-    icon: 'users' as const,
-    group: 'Navigation',
-    keywords: ['customer', 'party', 'contacts'],
-    to: '/clients'
-  },
-  {
-    id: 'products',
-    label: 'Open Products',
-    description: 'Review services, items, and rate cards',
-    icon: 'box' as const,
-    group: 'Navigation',
-    keywords: ['items', 'catalog', 'stock'],
-    to: '/products'
-  },
-  {
-    id: 'reports',
-    label: 'Open Reports',
-    description: 'Inspect tax, revenue, and aging reports',
-    icon: 'file-text' as const,
-    group: 'Insights',
-    keywords: ['gstr', 'analytics', 'charts'],
-    to: '/reports'
-  },
-  {
-    id: 'settings',
-    label: 'Open Settings',
-    description: 'Adjust billing, profile, and system preferences',
-    icon: 'settings' as const,
-    group: 'System',
-    keywords: ['preferences', 'profile', 'configuration'],
-    to: '/settings'
-  },
-  {
-    id: 'users',
-    label: 'Open Users & Tenants',
-    description: 'Manage LDAP-backed users and tenant admins',
-    icon: 'users' as const,
-    group: 'Super Admin',
-    keywords: ['ldap', 'tenants', 'admins'],
-    to: '/users'
-  },
-  {
-    id: 'roles',
-    label: 'Open Role Mapping',
-    description: 'Tune module access and permission mapping',
-    icon: 'check' as const,
-    group: 'Super Admin',
-    keywords: ['permissions', 'access', 'rbac'],
-    to: '/roles'
-  },
-  {
-    id: 'audit-logs',
-    label: 'Open Audit Logs',
-    description: 'Trace user actions, edits, and security events',
-    icon: 'search' as const,
-    group: 'Super Admin',
-    keywords: ['history', 'events', 'tracking'],
-    to: '/audit-logs'
-  },
-  {
-    id: 'account',
-    label: 'Open Account',
-    description: 'View profile, access, and billing owner details',
-    icon: 'users' as const,
-    group: 'System',
-    keywords: ['profile', 'identity', 'owner'],
-    to: '/account'
-  },
-  {
-    id: 'theme',
-    label: themeStore.theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode',
-    description: 'Toggle the application color mode',
-    icon: themeStore.theme === 'light' ? ('moon' as const) : ('sun' as const),
-    group: 'System',
-    keywords: ['theme', 'appearance', 'dark', 'light'],
-    run: toggleTheme
-  }
-])
+const commandActions = computed(() => {
+  const allActions = [
+    {
+      id: 'dashboard',
+      label: 'Go to Dashboard',
+      description: 'View key metrics and recent activity',
+      icon: 'home' as const,
+      group: 'Navigation',
+      keywords: ['home', 'overview', 'summary'],
+      to: '/',
+      module: 'Dashboard'
+    },
+    {
+      id: 'invoice-builder',
+      label: 'Create Invoice',
+      description: 'Open the invoice builder for a new bill',
+      icon: 'invoice' as const,
+      group: 'Create',
+      keywords: ['new invoice', 'builder', 'billing'],
+      to: '/invoices/builder',
+      module: 'Invoices'
+    },
+    {
+      id: 'invoices',
+      label: 'Open Invoices',
+      description: 'Review drafts, paid invoices, and overdue items',
+      icon: 'invoice' as const,
+      group: 'Navigation',
+      keywords: ['bills', 'sales', 'documents'],
+      to: '/invoices',
+      module: 'Invoices'
+    },
+    {
+      id: 'clients',
+      label: 'Open Clients',
+      description: 'Manage B2B, B2C, and export customer records',
+      icon: 'users' as const,
+      group: 'Navigation',
+      keywords: ['customer', 'party', 'contacts'],
+      to: '/clients',
+      module: 'Clients'
+    },
+    {
+      id: 'products',
+      label: 'Open Products',
+      description: 'Review services, items, and rate cards',
+      icon: 'box' as const,
+      group: 'Navigation',
+      keywords: ['items', 'catalog', 'stock'],
+      to: '/products',
+      module: 'Products'
+    },
+    {
+      id: 'reports',
+      label: 'Open Reports',
+      description: 'Inspect tax, revenue, and aging reports',
+      icon: 'file-text' as const,
+      group: 'Insights',
+      keywords: ['gstr', 'analytics', 'charts'],
+      to: '/reports',
+      module: 'Reports'
+    },
+    {
+      id: 'settings',
+      label: 'Open Settings',
+      description: 'Adjust billing, profile, and system preferences',
+      icon: 'settings' as const,
+      group: 'System',
+      keywords: ['preferences', 'profile', 'configuration'],
+      to: '/settings',
+      module: 'Settings'
+    },
+    {
+      id: 'users',
+      label: 'Open Users & Tenants',
+      description: 'Manage LDAP-backed users and tenant admins',
+      icon: 'users' as const,
+      group: 'Super Admin',
+      keywords: ['ldap', 'tenants', 'admins'],
+      to: '/users',
+      module: 'Role Management'
+    },
+    {
+      id: 'roles',
+      label: 'Open Role Mapping',
+      description: 'Tune module access and permission mapping',
+      icon: 'check' as const,
+      group: 'Super Admin',
+      keywords: ['permissions', 'access', 'rbac'],
+      to: '/roles',
+      module: 'Role Management'
+    },
+    {
+      id: 'audit-logs',
+      label: 'Open Audit Logs',
+      description: 'Trace user actions, edits, and security events',
+      icon: 'search' as const,
+      group: 'Super Admin',
+      keywords: ['history', 'events', 'tracking'],
+      to: '/audit-logs',
+      module: 'Audit Logs'
+    },
+    {
+      id: 'account',
+      label: 'Open Account',
+      description: 'View profile, access, and billing owner details',
+      icon: 'users' as const,
+      group: 'System',
+      keywords: ['profile', 'identity', 'owner'],
+      to: '/account'
+    },
+    {
+      id: 'theme',
+      label: themeStore.theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode',
+      description: 'Toggle the application color mode',
+      icon: themeStore.theme === 'light' ? ('moon' as const) : ('sun' as const),
+      group: 'System',
+      keywords: ['theme', 'appearance', 'dark', 'light'],
+      run: toggleTheme
+    }
+  ]
+
+  return allActions.filter(action => !action.module || authStore.canAccess(action.module))
+})
 
 const handleGlobalShortcut = (event: KeyboardEvent) => {
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
@@ -192,43 +208,45 @@ onBeforeUnmount(() => {
 
       
       <nav class="nav-menu">
-        <router-link to="/" class="nav-item" exact-active-class="active" title="Dashboard">
+        <router-link v-if="authStore.canAccess('Dashboard')" to="/" class="nav-item" exact-active-class="active" title="Dashboard">
           <AppIcon name="home" />
           <span v-show="!isCollapsed">Dashboard</span>
         </router-link>
-        <router-link to="/invoices" class="nav-item" active-class="active" title="Invoices">
+        <router-link v-if="authStore.canAccess('Invoices')" to="/invoices" class="nav-item" active-class="active" title="Invoices">
           <AppIcon name="invoice" />
           <span v-show="!isCollapsed">Invoices</span>
         </router-link>
-        <router-link to="/clients" class="nav-item" active-class="active" title="Clients">
+        <router-link v-if="authStore.canAccess('Clients')" to="/clients" class="nav-item" active-class="active" title="Clients">
           <AppIcon name="users" />
           <span v-show="!isCollapsed">Clients</span>
         </router-link>
-        <router-link to="/products" class="nav-item" active-class="active" title="Products">
+        <router-link v-if="authStore.canAccess('Products')" to="/products" class="nav-item" active-class="active" title="Products">
           <AppIcon name="box" />
           <span v-show="!isCollapsed">Products</span>
         </router-link>
-        <router-link to="/reports" class="nav-item" active-class="active" title="Reports">
+        <router-link v-if="authStore.canAccess('Reports')" to="/reports" class="nav-item" active-class="active" title="Reports">
           <AppIcon name="file-text" />
           <span v-show="!isCollapsed">Reports</span>
         </router-link>
 
-        <div class="sidebar-section-header" v-show="!isCollapsed" style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: bold; margin: 16px 16px 8px;">Super Admin</div>
-        
-        <router-link to="/users" class="nav-item" active-class="active" title="User Management (LDAP)">
-          <AppIcon name="users" />
-          <span v-show="!isCollapsed">Users & Tenants</span>
-        </router-link>
-        <router-link to="/roles" class="nav-item" active-class="active" title="Role Mapping">
-          <AppIcon name="check" />
-          <span v-show="!isCollapsed">Role Mapping</span>
-        </router-link>
-        <router-link to="/audit-logs" class="nav-item" active-class="active" title="Audit Logs">
-          <AppIcon name="search" />
-          <span v-show="!isCollapsed">Audit Logs</span>
-        </router-link>
+        <template v-if="authStore.canAccess('Audit Logs') || authStore.canAccess('Role Management')">
+          <div class="sidebar-section-header" v-show="!isCollapsed" style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: bold; margin: 16px 16px 8px;">Super Admin</div>
+          
+          <router-link v-if="authStore.canAccess('Role Management')" to="/users" class="nav-item" active-class="active" title="User Management (LDAP)">
+            <AppIcon name="users" />
+            <span v-show="!isCollapsed">Users & Tenants</span>
+          </router-link>
+          <router-link v-if="authStore.canAccess('Role Management')" to="/roles" class="nav-item" active-class="active" title="Role Mapping">
+            <AppIcon name="check" />
+            <span v-show="!isCollapsed">Role Mapping</span>
+          </router-link>
+          <router-link v-if="authStore.canAccess('Audit Logs')" to="/audit-logs" class="nav-item" active-class="active" title="Audit Logs">
+            <AppIcon name="search" />
+            <span v-show="!isCollapsed">Audit Logs</span>
+          </router-link>
+        </template>
 
-        <router-link to="/settings" class="nav-item mt-auto" active-class="active" title="Settings">
+        <router-link v-if="authStore.canAccess('Settings')" to="/settings" class="nav-item mt-auto" active-class="active" title="Settings">
           <AppIcon name="settings" />
           <span v-show="!isCollapsed">Settings</span>
         </router-link>
@@ -256,8 +274,8 @@ onBeforeUnmount(() => {
               @click.stop="toggleAccountMenu"
             >
               <div class="user-info">
-                <span class="user-name">Admin</span>
-                <span class="user-role">Account</span>
+                <span class="user-name">{{ authStore.currentUserRole === 'Super Admin' ? 'System Admin' : 'Staff User' }}</span>
+                <span class="user-role">{{ authStore.currentUserRole }}</span>
               </div>
               <div class="avatar-sm">
                 <AppIcon name="users" :size="16" />
@@ -275,6 +293,24 @@ onBeforeUnmount(() => {
                     <AppIcon name="users" :size="18" />
                     <span>My Profile</span>
                   </router-link>
+
+                  <div class="dropdown-divider"></div>
+                  <div class="dropdown-header">
+                    <span class="dropdown-title">Switch Role (Testing)</span>
+                  </div>
+                  
+                  <button 
+                    v-for="role in authStore.roles" 
+                    :key="role.id" 
+                    class="dropdown-item" 
+                    :class="{ 'text-primary': authStore.currentUserRole === role.name }"
+                    @click="authStore.setRole(role.name)"
+                  >
+                    <AppIcon :name="authStore.currentUserRole === role.name ? 'check' : 'users'" :size="18" />
+                    <span>{{ role.name }}</span>
+                  </button>
+
+                  <div class="dropdown-divider"></div>
 
                   <button class="dropdown-item" @click="toggleTheme">
                     <AppIcon :name="themeStore.theme === 'light' ? 'moon' : 'sun'" :size="18" />

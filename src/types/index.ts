@@ -78,3 +78,18 @@ export interface BusinessProfile {
   bankAccountNo?: string
   bankIFSC?: string
 }
+
+export type PermissionLevel = 'Full' | 'Read' | 'None'
+
+export interface Role {
+  id: number
+  name: string
+  desc: string
+}
+
+export interface PermissionRow {
+  module: string
+  super: PermissionLevel
+  client: PermissionLevel
+  finance: PermissionLevel
+}

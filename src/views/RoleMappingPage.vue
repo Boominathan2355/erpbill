@@ -1,24 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { useAuthStore } from '../stores/auth'
 import BaseButton from '../components/atoms/BaseButton.vue'
 import AppTable from '../components/organisms/AppTable.vue'
+import type { PermissionLevel } from '../types'
 
-const modules = ['Dashboard', 'Invoices', 'Clients', 'Products', 'Settings', 'Audit Logs', 'Role Management']
-const roles = ref([
-  { id: 1, name: 'Super Admin', desc: 'Can manage billing platform and create new client tenants.' },
-  { id: 2, name: 'Client Admin (Billing)', desc: 'Full access to a specific clients billing modules.' },
-  { id: 3, name: 'Finance Agent', desc: 'Read/Write access to invoices, no access to settings.' }
-])
-
-const permissionsMatrix = ref([
-  { module: 'Dashboard', super: 'Full', client: 'Full', finance: 'Read' },
-  { module: 'Invoices', super: 'Full', client: 'Full', finance: 'Full' },
-  { module: 'Clients', super: 'Full', client: 'Full', finance: 'Read' },
-  { module: 'Products', super: 'Full', client: 'Full', finance: 'Read' },
-  { module: 'Settings', super: 'Full', client: 'Full', finance: 'None' },
-  { module: 'Audit Logs', super: 'Full', client: 'None', finance: 'None' },
-  { module: 'Role Management', super: 'Full', client: 'None', finance: 'None' },
-])
+const authStore = useAuthStore()
 
 const matrixCols = [
   { key: 'module', label: 'Module' },
@@ -26,6 +12,17 @@ const matrixCols = [
   { key: 'client', label: 'Client Admin (Tenant)' },
   { key: 'finance', label: 'Finance Agent (Tenant)' }
 ]
+
+const permissionOptions: PermissionLevel[] = ['Full', 'Read', 'None']
+
+const getBadgeClass = (level: PermissionLevel) => {
+  switch (level) {
+    case 'Full': return 'bg-success bg-opacity-10 text-success'
+    case 'Read': return 'bg-primary bg-opacity-10 text-primary'
+    case 'None': return 'bg-danger bg-opacity-10 text-danger'
+    default: return 'bg-secondary'
+  }
+}
 </script>
 
 <template>
@@ -33,13 +30,13 @@ const matrixCols = [
     <header class="page-header d-flex justify-content-between align-items-center mb-4">
       <div class="header-info">
         <h1>Role Permissions & Modules</h1>
-        <p class="text-muted">Define access levels and module availability for custom roles.</p>
+        <p class="text-muted">Define access levels and module availability for custom roles. Changes apply in real-time.</p>
       </div>
       <BaseButton variant="glow" icon="plus">Create Custom Role</BaseButton>
     </header>
 
     <div class="roles-definitions mb-5 d-flex gap-3 flex-wrap">
-      <div class="role-card glass-card p-4 flex-fill" v-for="role in roles" :key="role.id">
+      <div class="role-card glass-card p-4 flex-fill" v-for="role in authStore.roles" :key="role.id">
         <h4 class="mb-2">{{ role.name }}</h4>
         <p class="text-muted mb-3" style="font-size: 0.875rem">{{ role.desc }}</p>
         <BaseButton variant="ghost" size="sm">Edit Role</BaseButton>
@@ -47,15 +44,21 @@ const matrixCols = [
     </div>
 
     <h3 class="mb-3">Module Access Matrix</h3>
-    <AppTable :columns="matrixCols" :data="permissionsMatrix">
+    <AppTable :columns="matrixCols" :data="authStore.permissionsMatrix">
       <template #col-super="{ row }">
-        <span class="badge" :class="row.super === 'Full' ? 'bg-success bg-opacity-10 text-success' : 'bg-secondary bg-opacity-10 text-secondary'">{{ row.super }}</span>
+        <select v-model="row.super" class="form-select form-select-sm border-0 bg-transparent fw-bold" :class="getBadgeClass(row.super)">
+          <option v-for="opt in permissionOptions" :key="opt" :value="opt">{{ opt }}</option>
+        </select>
       </template>
       <template #col-client="{ row }">
-         <span class="badge" :class="row.client === 'Full' ? 'bg-success bg-opacity-10 text-success' : row.client === 'None' ? 'bg-danger bg-opacity-10 text-danger' : 'bg-primary bg-opacity-10 text-primary'">{{ row.client }}</span>
+        <select v-model="row.client" class="form-select form-select-sm border-0 bg-transparent fw-bold" :class="getBadgeClass(row.client)">
+          <option v-for="opt in permissionOptions" :key="opt" :value="opt">{{ opt }}</option>
+        </select>
       </template>
       <template #col-finance="{ row }">
-         <span class="badge" :class="row.finance === 'Full' ? 'bg-success bg-opacity-10 text-success' : row.finance === 'None' ? 'bg-danger bg-opacity-10 text-danger' : 'bg-primary bg-opacity-10 text-primary'">{{ row.finance }}</span>
+        <select v-model="row.finance" class="form-select form-select-sm border-0 bg-transparent fw-bold" :class="getBadgeClass(row.finance)">
+          <option v-for="opt in permissionOptions" :key="opt" :value="opt">{{ opt }}</option>
+        </select>
       </template>
       <template #actions>
          <BaseButton variant="ghost" size="sm" icon="edit" />

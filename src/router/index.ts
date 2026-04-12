@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -10,61 +11,87 @@ const router = createRouter({
         {
           path: '',
           name: 'dashboard',
-          component: () => import('../views/DashboardPage.vue')
+          component: () => import('../views/DashboardPage.vue'),
+          meta: { title: 'Dashboard', module: 'Dashboard' }
         },
         {
           path: 'invoices',
           name: 'invoices',
-          component: () => import('../views/InvoicesPage.vue')
+          component: () => import('../views/InvoicesPage.vue'),
+          meta: { title: 'Invoices', module: 'Invoices' }
         },
         {
           path: 'clients',
           name: 'clients',
-          component: () => import('../views/ClientsPage.vue')
+          component: () => import('../views/ClientsPage.vue'),
+          meta: { title: 'Clients', module: 'Clients' }
         },
         {
           path: 'products',
           name: 'products',
-          component: () => import('../views/ProductsPage.vue')
+          component: () => import('../views/ProductsPage.vue'),
+          meta: { title: 'Products', module: 'Products' }
         },
         {
           path: 'reports',
           name: 'reports',
-          component: () => import('../views/ReportsPage.vue')
+          component: () => import('../views/ReportsPage.vue'),
+          meta: { title: 'Reports', module: 'Reports' }
         },
         {
           path: 'settings',
           name: 'settings',
-          component: () => import('../views/SettingsPage.vue')
+          component: () => import('../views/SettingsPage.vue'),
+          meta: { title: 'Settings', module: 'Settings' }
         },
         {
           path: 'account',
           name: 'account',
-          component: () => import('../views/AccountPage.vue')
+          component: () => import('../views/AccountPage.vue'),
+          meta: { title: 'My Account' }
         },
         {
           path: 'users',
           name: 'users',
-          component: () => import('../views/UserManagementPage.vue')
+          component: () => import('../views/UserManagementPage.vue'),
+          meta: { title: 'User Management', module: 'Role Management' }
         },
         {
           path: 'roles',
           name: 'roles',
-          component: () => import('../views/RoleMappingPage.vue')
+          component: () => import('../views/RoleMappingPage.vue'),
+          meta: { title: 'Role Mapping', module: 'Role Management' }
         },
         {
           path: 'audit-logs',
           name: 'audit-logs',
-          component: () => import('../views/AuditLogPage.vue')
+          component: () => import('../views/AuditLogPage.vue'),
+          meta: { title: 'Audit Logs', module: 'Audit Logs' }
         },
         {
           path: 'invoices/builder',
           name: 'invoice-builder',
-          component: () => import('../views/InvoiceBuilderPage.vue')
+          component: () => import('../views/InvoiceBuilderPage.vue'),
+          meta: { title: 'Create Invoice', module: 'Invoices' }
         }
       ]
     }
   ]
+})
+
+router.beforeEach((to, from, next) => {
+  const authStore = useAuthStore()
+  
+  // If route requires a specific module permission
+  if (to.meta.module) {
+    const moduleName = to.meta.module as string
+    if (!authStore.canAccess(moduleName)) {
+      // Redirect to dashboard or a 403 page if they don't have access
+      return next({ name: 'dashboard' })
+    }
+  }
+  
+  next()
 })
 
 export default router
