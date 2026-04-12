@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import type { Invoice } from '../types'
+import { readJSONStorage, writeJSONStorage } from '../utils/browserStorage'
 
 export const useInvoiceStore = defineStore('invoices', () => {
-  const invoices = ref<Invoice[]>(JSON.parse(localStorage.getItem('invoices') || '[]'))
+  const invoices = ref<Invoice[]>(readJSONStorage<Invoice[]>('invoices', []))
 
   const saveInvoice = (invoice: Invoice) => {
     const index = invoices.value.findIndex(i => i.id === invoice.id)
@@ -36,7 +37,7 @@ export const useInvoiceStore = defineStore('invoices', () => {
 
   // Persist to localStorage
   watch(invoices, (newInvoices) => {
-    localStorage.setItem('invoices', JSON.stringify(newInvoices))
+    writeJSONStorage('invoices', newInvoices)
   }, { deep: true })
 
   return { 

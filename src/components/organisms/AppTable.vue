@@ -24,8 +24,8 @@ const hasData = computed(() => props.data && props.data.length > 0)
 </script>
 
 <template>
-  <div class="table-container glass-card">
-    <table class="app-table">
+  <div class="table-container table-responsive glass-card">
+    <table class="table table-hover app-table mb-0">
       <thead>
         <tr>
           <th 
@@ -35,17 +35,17 @@ const hasData = computed(() => props.data && props.data.length > 0)
           >
             {{ col.label }}
           </th>
-          <th class="actions-head">Actions</th>
+          <th class="actions-head text-end">Actions</th>
         </tr>
       </thead>
       
       <tbody>
         <template v-if="loading">
-          <tr v-for="i in 3" :key="i" class="skeleton-row">
+          <tr v-for="i in 3" :key="i" class="placeholder-glow align-middle">
             <td v-for="col in columns" :key="col.key">
-              <div class="skeleton-line"></div>
+              <span class="placeholder col-12 rounded"></span>
             </td>
-            <td><div class="skeleton-line"></div></td>
+            <td><span class="placeholder col-8 rounded"></span></td>
           </tr>
         </template>
         
@@ -146,20 +146,5 @@ tr:not(.skeleton-row):hover td {
   align-items: center;
   gap: var(--spacing-md);
   color: var(--text-muted);
-}
-
-/* Skeleton animation */
-.skeleton-line {
-  height: 1rem;
-  background: var(--border-color);
-  border-radius: var(--radius-sm);
-  width: 100%;
-  animation: pulse 1.5s infinite ease-in-out;
-}
-
-@keyframes pulse {
-  0% { opacity: 0.6; }
-  50% { opacity: 0.3; }
-  100% { opacity: 0.6; }
 }
 </style>

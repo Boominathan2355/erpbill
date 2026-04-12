@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useClientStore } from '../stores/clients'
 import { useProductStore } from '../stores/products'
@@ -8,6 +8,7 @@ import { useSettingsStore } from '../stores/settings'
 import { useInvoiceBuilder } from '../composables/useInvoiceBuilder'
 import { formatCurrency } from '../utils/formatters'
 import BaseButton from '../components/atoms/BaseButton.vue'
+import BaseBadge from '../components/atoms/BaseBadge.vue'
 import BaseInput from '../components/atoms/BaseInput.vue'
 import BaseSearchSelect from '../components/atoms/BaseSearchSelect.vue'
 import BaseDatePicker from '../components/atoms/BaseDatePicker.vue'
@@ -19,7 +20,7 @@ const clientStore = useClientStore()
 const productStore = useProductStore()
 const invoiceStore = useInvoiceStore()
 const settingsStore = useSettingsStore()
-const { invoice, addItem, removeItem, calculateTotals } = useInvoiceBuilder(undefined, invoiceStore.getNextInvoiceNumber())
+const { invoice, isInterState, addItem, removeItem, calculateTotals } = useInvoiceBuilder(undefined, invoiceStore.getNextInvoiceNumber())
 
 const isSaved = ref(false)
 
@@ -31,11 +32,23 @@ const selectedClient = computed(() =>
   clientStore.clients.find(c => c.id === invoice.value.clientId)
 )
 
+watch(selectedClient, (client) => {
+  if (client) {
+    invoice.value.clientType = client.type
+    invoice.value.currency = client.currency || 'INR'
+    invoice.value.placeOfSupply = client.stateCode || ''
+    invoice.value.lutNumber = (client as any).lutNumber || ''
+    
+    isInterState.value = settingsStore.profile.stateCode !== client.stateCode
+    calculateTotals()
+  }
+})
+
 const productOptions = computed(() => 
   productStore.products.map(p => ({ 
     id: p.id, 
     label: p.name, 
-    sublabel: `${formatCurrency(p.price)} / ${p.unit}`
+    sublabel: `${formatCurrency(p.price, invoice.value.currency)} / ${p.unit}`
   }))
 )
 
@@ -87,12 +100,24 @@ onMounted(() => {
             <h3>Client & Dates</h3>
           </div>
           <div class="client-dates-grid">
-            <BaseSearchSelect 
-              v-model="invoice.clientId" 
-              label="Client"
-              :options="clientOptions"
-              placeholder="Search client..."
-            />
+            <div class="client-select-wrapper">
+              <BaseSearchSelect 
+                v-model="invoice.clientId" 
+                label="Client"
+                :options="clientOptions"
+                placeholder="Search client..."
+              />
+              <div v-if="selectedClient" class="client-context-ribbon mt-2 p-2 glass-card rounded" style="font-size: 0.85rem; border-left: 3px solid var(--color-primary)">
+                <strong>Type:</strong> <BaseBadge :text="(selectedClient.type || 'B2B').toUpperCase()" variant="info" class="mx-1"/>
+                <strong class="ms-2">Tax ID:</strong> {{ selectedClient.gstin || selectedClient.taxId || 'N/A' }} 
+                <span v-if="invoice.clientType === 'b2e'" class="ms-2">
+                  <strong>LUT:</strong> {{ invoice.lutNumber || 'None' }}
+                </span>
+                <span v-if="invoice.clientType !== 'b2e'" class="ms-2">
+                  <strong>State:</strong> {{ selectedClient.stateCode || 'Unknown' }}
+                </span>
+              </div>
+            </div>
             <BaseDatePicker v-model="invoice.date" label="Issue Date" />
             <BaseDatePicker v-model="invoice.dueDate" label="Due Date" />
           </div>
@@ -148,7 +173,7 @@ onMounted(() => {
                   </td>
                   <td>
                     <div class="price-edit">
-                      <span>₹</span>
+                      <span class="currency-symbol">{{ invoice.currency === 'USD' ? '$' : invoice.currency === 'EUR' ? '€' : '₹' }}</span>
                       <input 
                         type="number" 
                         v-model.number="item.price" 
@@ -157,7 +182,7 @@ onMounted(() => {
                     </div>
                   </td>
                   <td class="text-right font-bold">
-                    {{ formatCurrency(item.price * item.quantity) }}
+                    {{ formatCurrency(item.price * item.quantity, invoice.currency) }}
                   </td>
                   <td class="text-center">
                     <button class="remove-btn" @click="removeItem(item.id)">
@@ -213,19 +238,21 @@ onMounted(() => {
             <div class="totals-summary">
               <div class="summary-line">
                 <span>Subtotal</span>
-                <span>{{ formatCurrency(invoice.subtotal) }}</span>
+                <span>{{ formatCurrency(invoice.subtotal, invoice.currency) }}</span>
               </div>
               <div class="summary-line">
-                <span>GST (Tax)</span>
-                <span>{{ formatCurrency(invoice.taxTotal) }}</span>
+                <span v-if="invoice.clientType === 'b2e'">IGST @ 0% (Export)</span>
+                <span v-else-if="isInterState">IGST Total</span>
+                <span v-else>CGST + SGST Total</span>
+                <span>{{ formatCurrency(invoice.taxTotal, invoice.currency) }}</span>
               </div>
               <div v-if="invoice.discount > 0" class="summary-line discount">
                 <span>Discount</span>
-                <span>- {{ invoice.discountType === 'percentage' ? formatCurrency((invoice.subtotal * invoice.discount) / 100) : formatCurrency(invoice.discount) }}</span>
+                <span>- {{ invoice.discountType === 'percentage' ? formatCurrency((invoice.subtotal * invoice.discount) / 100, invoice.currency) : formatCurrency(invoice.discount, invoice.currency) }}</span>
               </div>
               <div class="summary-line grand-total">
                 <span>Grand Total</span>
-                <span>{{ formatCurrency(invoice.totalAmount) }}</span>
+                <span>{{ formatCurrency(invoice.totalAmount, invoice.currency) }}</span>
               </div>
             </div>
           </section>

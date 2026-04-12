@@ -31,3 +31,31 @@
   align-items: center;
   justify-content: center;
 }
+
+/* Bootstrap Overrides for Theme Consistency */
+.table {
+  --bs-table-bg: transparent !important;
+  --bs-table-hover-bg: rgba(99, 102, 241, 0.05) !important;
+  --bs-table-color: var(--text-main) !important;
+  --bs-table-border-color: var(--border-color) !important;
+  color: var(--text-main) !important;
+  background-color: transparent !important;
+}
+
+.table > :not(caption) > * > * {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border-bottom-color: var(--border-color) !important;
+  color: inherit !important;
+}
+
+.modal-content {
+  background-color: var(--bg-surface) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-main) !important;
+}
+
+/* Ensure glass-card background is always the priority */
+.glass-card .table {
+  background-color: transparent !important;
+}

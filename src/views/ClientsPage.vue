@@ -26,21 +26,52 @@ const filteredClients = computed(() => {
   )
 })
 
-const newClient = ref({
+const newClient = ref<{
+  type: import('../types').ClientType
+  name: string
+  email: string
+  phone: string
+  address: string
+  gstin?: string
+  stateCode?: string
+  country?: string
+  currency?: string
+  taxId?: string
+}>({
+  type: 'b2b',
   name: '',
   email: '',
   phone: '',
   address: '',
-  gstin: ''
+  gstin: '',
+  stateCode: '',
+  country: '',
+  currency: 'INR',
+  taxId: ''
 })
 
 const openAddModal = () => {
-  newClient.value = { name: '', email: '', phone: '', address: '', gstin: '' }
+  newClient.value = { 
+    type: 'b2b',
+    name: '', 
+    email: '', 
+    phone: '', 
+    address: '', 
+    gstin: '',
+    stateCode: '',
+    country: '',
+    currency: 'INR',
+    taxId: ''
+  }
   showModal.value = true
 }
 
 const handleAddClient = () => {
   if (!newClient.value.name) return
+  // Auto-extract state code from GSTIN for B2B if present
+  if (newClient.value.type === 'b2b' && newClient.value.gstin && newClient.value.gstin.length >= 2) {
+    newClient.value.stateCode = newClient.value.gstin.substring(0, 2)
+  }
   clientStore.addClient(newClient.value)
   showModal.value = false
 }
@@ -83,12 +114,56 @@ const handleDelete = (id: string) => {
       @close="showModal = false" 
       @confirm="handleAddClient"
     >
+      <div class="mb-4">
+        <label class="form-label fw-semibold" style="font-size: 0.875rem;">Client Type</label>
+        <div class="d-flex gap-3">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" v-model="newClient.type" value="b2b" id="b2b" />
+            <label class="form-check-label" for="b2b">B2B (Domestic Business)</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" v-model="newClient.type" value="b2c" id="b2c" />
+            <label class="form-check-label" for="b2c">B2C (Domestic Consumer)</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" v-model="newClient.type" value="b2e" id="b2e" />
+            <label class="form-check-label" for="b2e">B2E (Export)</label>
+          </div>
+        </div>
+      </div>
+
       <div class="form-grid">
-        <BaseInput v-model="newClient.name" label="Client Name" required placeholder="Acme Corp" />
+        <BaseInput v-model="newClient.name" :label="newClient.type === 'b2c' ? 'Customer Name' : 'Company Name'" required placeholder="Acme Corp" />
         <BaseInput v-model="newClient.email" label="Email Address" type="email" placeholder="billing@acme.com" />
         <BaseInput v-model="newClient.phone" label="Phone Number" placeholder="+91 ..." />
-        <BaseInput v-model="newClient.gstin" label="GSTIN" placeholder="27XXXX..." />
-        <div class="full-width">
+        
+        <BaseInput v-if="newClient.type === 'b2b'" v-model="newClient.gstin" label="GSTIN" placeholder="27XXXX..." />
+        
+        <div v-if="newClient.type === 'b2c'" class="mb-3 w-100">
+          <label class="form-label fw-semibold mb-1" style="font-size: 0.875rem;">Place of Supply (State Code)</label>
+          <select v-model="newClient.stateCode" class="form-select">
+            <option value="" disabled>Select State Code...</option>
+            <option value="27">27 - Maharashtra</option>
+            <option value="29">29 - Karnataka</option>
+            <!-- Add other common codes as needed -->
+          </select>
+        </div>
+
+        <template v-if="newClient.type === 'b2e'">
+          <BaseInput v-model="newClient.country" label="Country" placeholder="e.g. United States" />
+          <div class="mb-3 w-100">
+            <label class="form-label fw-semibold mb-1" style="font-size: 0.875rem;">Currency</label>
+            <select v-model="newClient.currency" class="form-select">
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="GBP">GBP (£)</option>
+              <option value="AUD">AUD (A$)</option>
+            </select>
+          </div>
+          <BaseInput v-model="newClient.taxId" label="Foreign Tax ID" placeholder="Optional" />
+        </template>
+
+        <div class="full-width mt-3">
           <BaseInput v-model="newClient.address" label="Full Address" placeholder="Street, City, Pin Code" />
         </div>
       </div>

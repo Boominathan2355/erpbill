@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import type { Product } from '../types'
+import { readJSONStorage, writeJSONStorage } from '../utils/browserStorage'
 
 export const useProductStore = defineStore('products', () => {
-  const products = ref<Product[]>(JSON.parse(localStorage.getItem('products') || '[]'))
+  const products = ref<Product[]>(readJSONStorage<Product[]>('products', []))
 
   const addProduct = (product: Omit<Product, 'id'>) => {
     const newProduct: Product = {
@@ -16,7 +17,17 @@ export const useProductStore = defineStore('products', () => {
   const updateProduct = (id: string, updatedProduct: Partial<Product>) => {
     const index = products.value.findIndex(p => p.id === id)
     if (index !== -1) {
-      products.value[index] = { ...products.value[index], ...updatedProduct }
+      const currentProduct = products.value[index]!
+      products.value[index] = {
+        ...currentProduct,
+        ...updatedProduct,
+        id: currentProduct.id,
+        name: updatedProduct.name ?? currentProduct.name,
+        description: updatedProduct.description ?? currentProduct.description,
+        price: updatedProduct.price ?? currentProduct.price,
+        unit: updatedProduct.unit ?? currentProduct.unit,
+        taxRate: updatedProduct.taxRate ?? currentProduct.taxRate
+      }
     }
   }
 
@@ -26,7 +37,7 @@ export const useProductStore = defineStore('products', () => {
 
   // Persist to localStorage
   watch(products, (newProducts) => {
-    localStorage.setItem('products', JSON.stringify(newProducts))
+    writeJSONStorage('products', newProducts)
   }, { deep: true })
 
   return { products, addProduct, updateProduct, deleteProduct }

@@ -12,8 +12,14 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const classes = computed(() => [
+  'badge',
   'base-badge',
-  `badge-${props.variant}`,
+  `bg-${props.variant === 'info' ? 'primary' : props.variant === 'ghost' ? 'secondary' : props.variant}`,
+  { 'bg-opacity-10 text-success': props.variant === 'success' },
+  { 'bg-opacity-10 text-warning': props.variant === 'warning' },
+  { 'bg-opacity-10 text-danger': props.variant === 'danger' },
+  { 'bg-opacity-10 text-primary': props.variant === 'info' },
+  { 'bg-transparent text-secondary border border-secondary': props.variant === 'ghost' },
   `size-${props.size}`
 ])
 </script>

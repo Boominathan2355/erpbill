@@ -1,5 +1,5 @@
 import { ref, computed, watch } from 'vue'
-import type { Invoice, InvoiceItem, Product } from '../types'
+import type { Invoice, InvoiceItem, Product, ClientType } from '../types'
 import { generateId } from '../utils/formatters'
 import { calculateGST } from '../utils/taxUtils'
 
@@ -9,6 +9,10 @@ export function useInvoiceBuilder(initialInvoice?: Invoice, nextNumber?: string)
     date: initialInvoice?.date || Date.now(),
     dueDate: initialInvoice?.dueDate || (Date.now() + 7 * 24 * 60 * 60 * 1000),
     clientId: initialInvoice?.clientId || '',
+    clientType: initialInvoice?.clientType || 'b2b',
+    currency: initialInvoice?.currency || 'INR',
+    lutNumber: initialInvoice?.lutNumber || '',
+    placeOfSupply: initialInvoice?.placeOfSupply || '',
     items: initialInvoice?.items || [],
     subtotal: initialInvoice?.subtotal || 0,
     taxTotal: initialInvoice?.taxTotal || 0,
@@ -26,6 +30,8 @@ export function useInvoiceBuilder(initialInvoice?: Invoice, nextNumber?: string)
       invoice.value.dueDate = newDate + (7 * 24 * 60 * 60 * 1000)
     }
   })
+
+  const isInterState = ref(false)
 
   const addItem = (product: Product) => {
     const item: InvoiceItem = {
@@ -53,7 +59,7 @@ export function useInvoiceBuilder(initialInvoice?: Invoice, nextNumber?: string)
     
     invoice.value.items.forEach(item => {
       const baseAmount = item.price * item.quantity
-      const tax = calculateGST(baseAmount, item.taxRate)
+      const tax = calculateGST(baseAmount, item.taxRate, invoice.value.clientType, isInterState.value)
       
       item.taxAmount = tax.totalTax
       item.total = baseAmount + tax.totalTax
@@ -77,6 +83,7 @@ export function useInvoiceBuilder(initialInvoice?: Invoice, nextNumber?: string)
 
   return {
     invoice,
+    isInterState,
     addItem,
     removeItem,
     calculateTotals

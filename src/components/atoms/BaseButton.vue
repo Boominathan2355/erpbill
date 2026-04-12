@@ -7,7 +7,7 @@ interface Props {
   size?: 'sm' | 'md' | 'lg'
   disabled?: boolean
   loading?: boolean
-  icon?: 'home' | 'invoice' | 'users' | 'box' | 'settings' | 'plus' | 'trash' | 'edit' | 'sun' | 'moon' | 'menu' | 'arrow-left' | 'search' | 'chevron-down' | 'calendar' | 'download' | 'printer' | 'percent' | 'file-text' | 'eye' | 'eye-off'
+  icon?: 'home' | 'invoice' | 'users' | 'box' | 'settings' | 'plus' | 'trash' | 'edit' | 'sun' | 'moon' | 'menu' | 'arrow-left' | 'search' | 'chevron-down' | 'calendar' | 'download' | 'printer' | 'percent' | 'file-text' | 'eye' | 'eye-off' | 'check'
   iconPosition?: 'left' | 'right'
 }
 
@@ -20,10 +20,14 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const classes = computed(() => [
+  'btn',
   'base-button',
-  `variant-${props.variant}`,
-  `size-${props.size}`,
-  { 'is-loading': props.loading, 'is-disabled': props.disabled }
+  props.variant === 'primary' ? 'btn-primary' : 
+  props.variant === 'ghost' ? 'btn-outline-secondary' : 
+  props.variant === 'danger' ? 'btn-danger' : 
+  props.variant === 'glow' ? 'btn-primary variant-glow' : 'btn-primary',
+  props.size === 'sm' ? 'btn-sm' : props.size === 'lg' ? 'btn-lg' : '',
+  { 'is-loading': props.loading, 'disabled placeholder-wave': props.disabled }
 ])
 
 const iconSize = computed(() => {
@@ -34,8 +38,11 @@ const iconSize = computed(() => {
 </script>
 
 <template>
-  <button :class="classes" :disabled="disabled || loading" class="btn-ripple">
-    <span v-if="loading" class="spinner"></span>
+  <button :class="classes" :disabled="disabled || loading" class="btn-ripple position-relative">
+    <template v-if="loading">
+      <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+      Loading...
+    </template>
     <template v-else>
       <AppIcon 
         v-if="icon && iconPosition === 'left'" 
@@ -114,20 +121,6 @@ const iconSize = computed(() => {
 .is-disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-.spinner {
-  width: 1.2em;
-  height: 1.2em;
-  border: 2px solid currentColor;
-  border-right-color: transparent;
-  border-radius: 50%;
-  animation: rotate 0.8s linear infinite;
-}
-
-@keyframes rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 
 .btn-icon.left { margin-right: 2px; }

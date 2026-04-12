@@ -19,6 +19,12 @@ const formatDate = (timestamp: number) => {
   })
 }
 
+const isInterState = computed(() => props.business.stateCode !== props.client?.stateCode)
+
+const cgstTotal = computed(() => props.invoice.items.reduce((sum, item) => sum + (props.invoice.clientType !== 'b2e' && !isInterState.value ? item.taxAmount / 2 : 0), 0))
+const sgstTotal = computed(() => props.invoice.items.reduce((sum, item) => sum + (props.invoice.clientType !== 'b2e' && !isInterState.value ? item.taxAmount / 2 : 0), 0))
+const igstTotal = computed(() => props.invoice.items.reduce((sum, item) => sum + (props.invoice.clientType !== 'b2e' && isInterState.value ? item.taxAmount : 0), 0))
+
 const discountAmount = computed(() => {
   if (props.invoice.discountType === 'percentage') {
     return (props.invoice.subtotal * props.invoice.discount) / 100
@@ -44,7 +50,7 @@ const discountAmount = computed(() => {
           </div>
         </div>
         <div class="invoice-meta">
-          <div class="document-type">INVOICE</div>
+          <div class="document-type">{{ invoice.clientType === 'b2e' ? 'EXPORT INVOICE' : 'TAX INVOICE' }}</div>
           <p class="inv-num">#{{ invoice.invoiceNumber || 'DRAFT' }}</p>
           <div class="dates mt-sm">
             <div class="date-row">
@@ -67,6 +73,7 @@ const discountAmount = computed(() => {
             <p>{{ client.address }}</p>
             <p>{{ client.email }}</p>
             <p v-if="client.gstin">GSTIN: {{ client.gstin }}</p>
+            <p v-if="invoice.clientType === 'b2e' && invoice.lutNumber">LUT No: {{ invoice.lutNumber }}</p>
           </div>
           <div v-else class="placeholder-text">
             Select a client to see billing details
@@ -89,8 +96,8 @@ const discountAmount = computed(() => {
               <div class="item-name">{{ item.name }}</div>
             </td>
             <td class="text-right">{{ item.quantity }}</td>
-            <td class="text-right">{{ formatCurrency(item.price) }}</td>
-            <td class="text-right">{{ formatCurrency(item.price * item.quantity) }}</td>
+            <td class="text-right">{{ formatCurrency(item.price, invoice.currency) }}</td>
+            <td class="text-right">{{ formatCurrency(item.price * item.quantity, invoice.currency) }}</td>
           </tr>
           <tr v-if="invoice.items.length === 0">
             <td colspan="4" class="empty-placeholder">No items added yet</td>
@@ -112,19 +119,39 @@ const discountAmount = computed(() => {
         <div class="totals-block">
           <div class="summary-line">
             <span>Subtotal</span>
-            <span>{{ formatCurrency(invoice.subtotal) }}</span>
+            <span>{{ formatCurrency(invoice.subtotal, invoice.currency) }}</span>
           </div>
-          <div class="summary-line">
-            <span>GST Total</span>
-            <span>{{ formatCurrency(invoice.taxTotal) }}</span>
-          </div>
+          
+          <template v-if="invoice.clientType === 'b2e'">
+            <div class="summary-line">
+              <span>IGST (Export under LUT)</span>
+              <span>{{ formatCurrency(0, invoice.currency) }}</span>
+            </div>
+          </template>
+          <template v-else-if="isInterState">
+            <div class="summary-line" v-if="igstTotal > 0">
+              <span>IGST Total</span>
+              <span>{{ formatCurrency(igstTotal, invoice.currency) }}</span>
+            </div>
+          </template>
+          <template v-else>
+            <div class="summary-line" v-if="cgstTotal > 0">
+              <span>CGST Total</span>
+              <span>{{ formatCurrency(cgstTotal, invoice.currency) }}</span>
+            </div>
+            <div class="summary-line" v-if="sgstTotal > 0">
+              <span>SGST Total</span>
+              <span>{{ formatCurrency(sgstTotal, invoice.currency) }}</span>
+            </div>
+          </template>
+
           <div v-if="invoice.discount > 0" class="summary-line discount">
             <span>Discount {{ invoice.discountType === 'percentage' ? `(${invoice.discount}%)` : '' }}</span>
-            <span>- {{ formatCurrency(discountAmount) }}</span>
+            <span>- {{ formatCurrency(discountAmount, invoice.currency) }}</span>
           </div>
           <div class="summary-line grand-total">
             <span>Grand Total</span>
-            <span>{{ formatCurrency(invoice.totalAmount) }}</span>
+            <span>{{ formatCurrency(invoice.totalAmount, invoice.currency) }}</span>
           </div>
         </div>
       </div>

@@ -1,12 +1,19 @@
 /* src/types/index.ts */
 
+export type ClientType = 'b2b' | 'b2c' | 'b2e'
+
 export interface Client {
   id: string
+  type: ClientType
   name: string
   email: string
   phone: string
   address: string
   gstin?: string
+  stateCode?: string
+  country?: string
+  currency?: string
+  taxId?: string
   createdAt: number
 }
 
@@ -37,6 +44,10 @@ export interface Invoice {
   date: number
   dueDate: number
   clientId: string
+  clientType?: ClientType
+  currency?: string
+  lutNumber?: string
+  placeOfSupply?: string
   items: InvoiceItem[]
   subtotal: number
   taxTotal: number // Sum of CGST/SGST or IGST/VAT
@@ -54,5 +65,6 @@ export interface BusinessProfile {
   email: string
   phone: string
   gstin?: string
+  stateCode?: string
   logo?: string
 }

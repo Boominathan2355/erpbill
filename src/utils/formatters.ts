@@ -1,12 +1,13 @@
 /* src/utils/formatters.ts */
 
 /**
- * Format a number as Indian Rupee (INR)
+ * Format a number dynamically based on currency
  */
-export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('en-IN', {
+export const formatCurrency = (amount: number, currencyCode: string = 'INR'): string => {
+  const locale = currencyCode === 'INR' ? 'en-IN' : 'en-US'
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: 'INR',
+    currency: currencyCode,
     maximumFractionDigits: 2
   }).format(amount)
 }

@@ -8,7 +8,7 @@ interface Props {
   placeholder?: string
   type?: string
   error?: string
-  icon?: 'home' | 'invoice' | 'users' | 'box' | 'settings' | 'plus' | 'trash' | 'edit' | 'sun' | 'moon'
+  icon?: 'home' | 'invoice' | 'users' | 'box' | 'settings' | 'plus' | 'trash' | 'edit' | 'sun' | 'moon' | 'search' | 'file-text'
   disabled?: boolean
   required?: boolean
 }
@@ -27,14 +27,15 @@ const onInput = (event: Event) => {
 }
 
 const inputClasses = computed(() => [
+  'form-control',
   'input-field',
-  { 'has-error': props.error, 'has-icon': props.icon, 'is-disabled': props.disabled }
+  { 'is-invalid': props.error, 'has-error': props.error, 'has-icon': props.icon, 'disabled': props.disabled }
 ])
 </script>
 
 <template>
   <div class="base-input-container">
-    <label v-if="label" class="input-label">
+    <label v-if="label" class="form-label input-label">
       {{ label }}
       <span v-if="required" class="required-star">*</span>
     </label>
@@ -61,7 +62,7 @@ const inputClasses = computed(() => [
     </div>
     
     <transition name="fade">
-      <span v-if="error" class="error-message">{{ error }}</span>
+      <span v-if="error" class="invalid-feedback d-block">{{ error }}</span>
     </transition>
   </div>
 </template>

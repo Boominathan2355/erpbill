@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import type { Client } from '../types'
+import { readJSONStorage, writeJSONStorage } from '../utils/browserStorage'
 
 export const useClientStore = defineStore('clients', () => {
-  const clients = ref<Client[]>(JSON.parse(localStorage.getItem('clients') || '[]'))
+  const clients = ref<Client[]>(readJSONStorage<Client[]>('clients', []))
 
   const addClient = (client: Omit<Client, 'id' | 'createdAt'>) => {
     const newClient: Client = {
@@ -17,7 +18,18 @@ export const useClientStore = defineStore('clients', () => {
   const updateClient = (id: string, updatedClient: Partial<Client>) => {
     const index = clients.value.findIndex(c => c.id === id)
     if (index !== -1) {
-      clients.value[index] = { ...clients.value[index], ...updatedClient }
+      const currentClient = clients.value[index]!
+      clients.value[index] = {
+        ...currentClient,
+        ...updatedClient,
+        id: currentClient.id,
+        type: updatedClient.type ?? currentClient.type,
+        name: updatedClient.name ?? currentClient.name,
+        email: updatedClient.email ?? currentClient.email,
+        phone: updatedClient.phone ?? currentClient.phone,
+        address: updatedClient.address ?? currentClient.address,
+        createdAt: currentClient.createdAt
+      }
     }
   }
 
@@ -27,7 +39,7 @@ export const useClientStore = defineStore('clients', () => {
 
   // Persist to localStorage
   watch(clients, (newClients) => {
-    localStorage.setItem('clients', JSON.stringify(newClients))
+    writeJSONStorage('clients', newClients)
   }, { deep: true })
 
   return { clients, addClient, updateClient, deleteClient }
