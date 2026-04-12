@@ -189,6 +189,31 @@ const discountAmount = computed(() => {
   margin-bottom: 50px;
 }
 
+.brand {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+}
+
+.logo-circle {
+  width: 80px;
+  height: 80px;
+  min-width: 80px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #f1f5f9;
+}
+
+.logo-circle img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
 .brand-info h2 {
   margin: 0;
   font-size: 1.5rem;
@@ -285,7 +310,14 @@ const discountAmount = computed(() => {
   margin-top: auto;
   display: grid;
   grid-template-columns: 1.2fr 1fr;
-  gap: 50px;
+  gap: 30px;
+}
+
+@media (max-width: 600px) {
+  .invoice-foot {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
 }
 
 .notes-block p {

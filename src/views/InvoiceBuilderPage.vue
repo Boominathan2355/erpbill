@@ -594,9 +594,10 @@ onMounted(() => {
 
 .preview-container {
   flex: 1;
-  overflow: hidden;
+  overflow-y: auto;
   border-radius: var(--radius-lg);
-  padding: 0;
+  padding: var(--spacing-md);
+  background: rgba(0, 0, 0, 0.2);
 }
 
 /* Animations */
