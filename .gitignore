@@ -37,3 +37,8 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# Backend
+backend/node_modules
+backend/.env
+backend/logs

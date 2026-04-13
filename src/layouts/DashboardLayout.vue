@@ -372,22 +372,6 @@ onBeforeUnmount(() => {
                   </router-link>
 
                   <div class="dropdown-divider"></div>
-                  <div class="dropdown-header">
-                    <span class="dropdown-title">Switch Role (Testing)</span>
-                  </div>
-                  
-                  <button 
-                    v-for="role in authStore.roles" 
-                    :key="role.id" 
-                    class="dropdown-item" 
-                    :class="{ 'text-primary': authStore.currentUserRole === role.name }"
-                    @click="authStore.setRole(role.name)"
-                  >
-                    <AppIcon :name="authStore.currentUserRole === role.name ? 'check' : 'users'" :size="18" />
-                    <span>{{ role.name }}</span>
-                  </button>
-
-                  <div class="dropdown-divider"></div>
 
                   <button class="dropdown-item" @click="toggleTheme">
                     <AppIcon :name="themeStore.theme === 'light' ? 'moon' : 'sun'" :size="18" />
