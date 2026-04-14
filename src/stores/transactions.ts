@@ -6,6 +6,8 @@ import api from '../utils/api'
 import { useBusinessStore } from './business'
 
 // Financial transaction ledger store
+const STORAGE_KEY = 'billsoft_transactions'
+
 export const useTransactionStore = defineStore('transactions', () => {
   const businessStore = useBusinessStore()
   const transactions = ref<Transaction[]>([])
@@ -119,7 +121,7 @@ export const useTransactionStore = defineStore('transactions', () => {
 
   // Persist to localStorage
   watch(transactions, (newVal) => {
-    writeJSONStorage(storageKey, newVal)
+    writeJSONStorage(STORAGE_KEY, newVal)
   }, { deep: true })
 
   return {

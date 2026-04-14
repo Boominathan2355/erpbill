@@ -376,7 +376,7 @@ onBeforeUnmount(() => {
                   </div>
                   
                   <button 
-                    v-for="role in authStore.roles" 
+                    v-for="role in roleStore.roles" 
                     :key="role.id" 
                     class="dropdown-item" 
                     :class="{ 'text-primary': authStore.currentUserRole === role.name }"

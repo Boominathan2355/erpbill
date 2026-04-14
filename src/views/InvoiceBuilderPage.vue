@@ -26,7 +26,7 @@ const authStore = useAuthStore()
 
 const { invoice, isInterState, addItem, removeItem, calculateTotals } = useInvoiceBuilder(
   { clientType: authStore.currentType } as any, 
-  invoiceStore.getNextInvoiceNumber()
+  ''
 )
 
 const isSaved = ref(false)
@@ -82,7 +82,10 @@ const handleClose = () => {
   router.push('/invoices')
 }
 
-onMounted(() => {
+onMounted(async () => {
+  if (!invoice.value.invoiceNumber) {
+    invoice.value.invoiceNumber = await invoiceStore.getNextInvoiceNumber()
+  }
   calculateTotals()
 })
 </script>

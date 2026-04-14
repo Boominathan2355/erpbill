@@ -8,13 +8,15 @@ const businessStore = useBusinessStore()
 const isAddingBusiness = ref(false)
 const newBusinessName = ref('')
 
-const handleAddBusiness = () => {
+const handleAddBusiness = async () => {
   if (!newBusinessName.value) return
-  const id = businessStore.addBusiness(newBusinessName.value)
+  const id = await businessStore.addBusiness(newBusinessName.value)
   newBusinessName.value = ''
   isAddingBusiness.value = false
   // Switch to new business
-  businessStore.switchBusiness(id)
+  if (id) {
+    businessStore.switchBusiness(id)
+  }
 }
 </script>
 
