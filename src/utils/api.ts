@@ -3,7 +3,7 @@ import axios from 'axios';
 import { readStringStorage } from './browserStorage';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://erpbill.onrender.com/api',
   headers: {
     'Content-Type': 'application/json',
   },
