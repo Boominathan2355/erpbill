@@ -262,7 +262,6 @@ onBeforeUnmount(() => {
         </router-link>
 
         <template v-if="authStore.canAccess('Audit Logs') || authStore.canAccess('Role Management')">
-          <div class="sidebar-section-header" v-show="!isCollapsed" style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: bold; margin: 16px 16px 8px;">Super Admin</div>
           
           <router-link v-if="authStore.canAccess('Role Management')" to="/users" class="nav-item" active-class="active" title="User Management (LDAP)">
             <AppIcon name="users" />
@@ -370,21 +369,6 @@ onBeforeUnmount(() => {
                     <span>My Profile</span>
                   </router-link>
 
-                  <div class="dropdown-divider"></div>
-                  <div class="dropdown-header">
-                    <span class="dropdown-title">Switch Role (Testing)</span>
-                  </div>
-                  
-                  <button 
-                    v-for="role in roleStore.roles" 
-                    :key="role.id" 
-                    class="dropdown-item" 
-                    :class="{ 'text-primary': authStore.currentUserRole === role.name }"
-                    @click="authStore.setRole(role.name)"
-                  >
-                    <AppIcon :name="authStore.currentUserRole === role.name ? 'check' : 'users'" :size="18" />
-                    <span>{{ role.name }}</span>
-                  </button>
 
                   <div class="dropdown-divider"></div>
 
@@ -441,12 +425,14 @@ onBeforeUnmount(() => {
   gap: var(--spacing-xl);
   flex-shrink: 0;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .sidebar.collapsed {
   width: 80px;
   padding: var(--spacing-lg) var(--spacing-md);
+  overflow: hidden;
 }
 
 .sidebar-header {
