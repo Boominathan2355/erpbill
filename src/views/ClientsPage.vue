@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useClientStore } from '../stores/clients'
 import AppTable from '../components/organisms/AppTable.vue'
 import AppModal from '../components/organisms/AppModal.vue'
@@ -8,6 +8,10 @@ import BaseInput from '../components/atoms/BaseInput.vue'
 import AppIcon from '../components/atoms/AppIcon.vue'
 
 const clientStore = useClientStore()
+
+onMounted(() => {
+  clientStore.fetchClients()
+})
 const showModal = ref(false)
 const searchQuery = ref('')
 

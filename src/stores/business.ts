@@ -7,8 +7,9 @@ import { useAuthStore } from './auth'
 
 export const useBusinessStore = defineStore('business', () => {
   const authStore = useAuthStore()
-  const businesses = ref<Business[]>(readJSONStorage<Business[]>('businesses', []))
+  const businesses = ref<Business[]>([])
   const activeBusinessId = ref<string>(readJSONStorage<string>('active_business_id', ''))
+  const isLoading = ref(false)
 
   // Update activeBusinessId if auth store has a businessId and we don't have one set
   watch(() => authStore.currentUser?.businessId, (newBizId) => {
@@ -18,10 +19,14 @@ export const useBusinessStore = defineStore('business', () => {
   }, { immediate: true })
 
   const activeBusiness = computed(() => {
-    return businesses.value.find(b => b.id === activeBusinessId.value) || businesses.value[0]
+    return businesses.value.find(b => (b._id || b.id) === activeBusinessId.value) || businesses.value[0]
   })
 
-  const fetchBusinesses = async () => {
+  const fetchBusinesses = async (force = false) => {
+    if (isLoading.value) return
+    if (businesses.value.length > 0 && !force) return
+
+    isLoading.value = true
     try {
       const response = await api.get('/businesses')
       businesses.value = response.data.data
@@ -31,6 +36,8 @@ export const useBusinessStore = defineStore('business', () => {
       }
     } catch (error) {
       console.error('Failed to fetch businesses:', error)
+    } finally {
+      isLoading.value = false
     }
   }
 
@@ -79,6 +86,7 @@ export const useBusinessStore = defineStore('business', () => {
   const switchBusiness = (id: string) => {
     if (businesses.value.some(b => (b._id || b.id) === id)) {
       activeBusinessId.value = id
+      writeJSONStorage('active_business_id', id)
       // Force reload to ensure other stores re-initialize with new business context
       window.location.reload()
     }
@@ -86,11 +94,7 @@ export const useBusinessStore = defineStore('business', () => {
 
   const canAddBusiness = computed(() => businesses.value.length < 5)
 
-  // Persist
-  watch(businesses, (newVal) => {
-    writeJSONStorage('businesses', newVal)
-  }, { deep: true })
-
+  // Persist only session context
   watch(activeBusinessId, (newId) => {
     writeJSONStorage('active_business_id', newId)
   })

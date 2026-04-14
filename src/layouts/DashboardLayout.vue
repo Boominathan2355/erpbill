@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useThemeStore } from '../stores/theme'
 import { useAuthStore } from '../stores/auth'
+import { useRoleStore } from '../stores/role'
 import { useBusinessStore } from '../stores/business'
 import { useClientStore } from '../stores/clients'
 import { useProductStore } from '../stores/products'
@@ -14,6 +15,7 @@ import CommandPalette from '../components/organisms/CommandPalette.vue'
 
 const themeStore = useThemeStore()
 const authStore = useAuthStore()
+const roleStore = useRoleStore()
 const businessStore = useBusinessStore()
 const router = useRouter()
 const isCollapsed = ref(false)
@@ -210,10 +212,7 @@ onMounted(() => {
   // Initial Data Fetch
   if (authStore.isLoggedIn) {
     businessStore.fetchBusinesses()
-    useClientStore().fetchClients()
-    useProductStore().fetchProducts()
-    useInvoiceStore().fetchInvoices()
-    useTransactionStore().fetchTransactions()
+    roleStore.fetchRoles()
   }
 })
 
@@ -370,6 +369,22 @@ onBeforeUnmount(() => {
                     <AppIcon name="users" :size="18" />
                     <span>My Profile</span>
                   </router-link>
+
+                  <div class="dropdown-divider"></div>
+                  <div class="dropdown-header">
+                    <span class="dropdown-title">Switch Role (Testing)</span>
+                  </div>
+                  
+                  <button 
+                    v-for="role in authStore.roles" 
+                    :key="role.id" 
+                    class="dropdown-item" 
+                    :class="{ 'text-primary': authStore.currentUserRole === role.name }"
+                    @click="authStore.setRole(role.name)"
+                  >
+                    <AppIcon :name="authStore.currentUserRole === role.name ? 'check' : 'users'" :size="18" />
+                    <span>{{ role.name }}</span>
+                  </button>
 
                   <div class="dropdown-divider"></div>
 

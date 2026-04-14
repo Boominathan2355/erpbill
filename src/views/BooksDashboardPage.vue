@@ -114,6 +114,7 @@ const formatDate = (timestamp: number) => {
 }
 
 onMounted(() => {
+  transactionStore.fetchTransactions()
   initChart()
   window.addEventListener('resize', () => chartInstance?.resize())
 })

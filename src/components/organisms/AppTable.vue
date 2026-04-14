@@ -13,11 +13,13 @@ interface Props {
   data: any[]
   loading?: boolean
   emptyMessage?: string
+  hideActions?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
-  emptyMessage: 'No data found.'
+  emptyMessage: 'No data found.',
+  hideActions: false
 })
 
 const hasData = computed(() => props.data && props.data.length > 0)
@@ -35,7 +37,7 @@ const hasData = computed(() => props.data && props.data.length > 0)
           >
             {{ col.label }}
           </th>
-          <th class="actions-head text-end">Actions</th>
+          <th v-if="!hideActions" class="actions-head text-end">Actions</th>
         </tr>
       </thead>
       
@@ -60,7 +62,7 @@ const hasData = computed(() => props.data && props.data.length > 0)
                 {{ row[col.key] }}
               </slot>
             </td>
-            <td class="actions-cell">
+            <td v-if="!hideActions" class="actions-cell">
               <div class="actions-wrapper">
                 <slot name="actions" :row="row"></slot>
               </div>
@@ -69,7 +71,7 @@ const hasData = computed(() => props.data && props.data.length > 0)
         </template>
         
         <tr v-else>
-          <td :colspan="columns.length + 1" class="empty-cell">
+          <td :colspan="columns.length + (hideActions ? 0 : 1)" class="empty-cell">
             <div class="empty-state">
               <AppIcon name="box" :size="48" color="var(--text-muted)" />
               <p>{{ emptyMessage }}</p>

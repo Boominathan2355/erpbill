@@ -8,15 +8,21 @@ import { useBusinessStore } from './business'
 // Financial transaction ledger store
 export const useTransactionStore = defineStore('transactions', () => {
   const businessStore = useBusinessStore()
-  const storageKey = `transactions_${businessStore.activeBusinessId}`
-  const transactions = ref<Transaction[]>(readJSONStorage<Transaction[]>(storageKey, []))
+  const transactions = ref<Transaction[]>([])
+  const isLoading = ref(false)
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = async (force = false) => {
+    if (isLoading.value) return
+    if (transactions.value.length > 0 && !force) return
+
+    isLoading.value = true
     try {
       const response = await api.get('/transactions')
       transactions.value = response.data.data
     } catch (error) {
       console.error('Failed to fetch transactions:', error)
+    } finally {
+      isLoading.value = false
     }
   }
 

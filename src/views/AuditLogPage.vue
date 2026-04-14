@@ -34,7 +34,7 @@ const auditData = ref([
       <BaseInput v-model="searchQuery" placeholder="Search logs..." icon="file-text" />
     </div>
 
-    <AppTable :columns="columns" :data="auditData" />
+    <AppTable :columns="columns" :data="auditData" hide-actions />
   </div>
 </template>
 

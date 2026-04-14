@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useProductStore } from '../stores/products'
 import { formatCurrency } from '../utils/formatters'
 import AppTable from '../components/organisms/AppTable.vue'
@@ -8,6 +8,10 @@ import BaseButton from '../components/atoms/BaseButton.vue'
 import BaseInput from '../components/atoms/BaseInput.vue'
 
 const productStore = useProductStore()
+
+onMounted(() => {
+  productStore.fetchProducts()
+})
 const showModal = ref(false)
 const searchQuery = ref('')
 

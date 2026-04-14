@@ -8,15 +8,21 @@ import { useBusinessStore } from './business'
 // Store for managing product and service listings
 export const useProductStore = defineStore('products', () => {
   const businessStore = useBusinessStore()
-  const storageKey = `products_${businessStore.activeBusinessId}`
-  const products = ref<Product[]>(readJSONStorage<Product[]>(storageKey, []))
+  const products = ref<Product[]>([])
+  const isLoading = ref(false)
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (force = false) => {
+    if (isLoading.value) return
+    if (products.value.length > 0 && !force) return
+
+    isLoading.value = true
     try {
       const response = await api.get('/products')
       products.value = response.data.data
     } catch (error) {
       console.error('Failed to fetch products:', error)
+    } finally {
+      isLoading.value = false
     }
   }
 
@@ -49,11 +55,6 @@ export const useProductStore = defineStore('products', () => {
       console.error('Failed to delete product:', error)
     }
   }
-
-  // Persist to localStorage
-  watch(products, (newProducts) => {
-    writeJSONStorage(storageKey, newProducts)
-  }, { deep: true })
 
   return { products, fetchProducts, addProduct, updateProduct, deleteProduct: deleteProductById }
 })

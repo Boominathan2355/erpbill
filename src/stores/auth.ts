@@ -20,11 +20,6 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isLoggedIn = ref<boolean>(!!readStringStorage('auth_token', ''))
 
-  const roles = ref<Role[]>([
-    { id: 1, name: 'Super Admin', desc: 'Can manage billing platform and create new client tenants.' },
-    { id: 2, name: 'Client Admin (Billing)', desc: 'Full access to a specific clients billing modules.' },
-    { id: 3, name: 'Finance Agent', desc: 'Read/Write access to invoices, no access to settings.' }
-  ])
 
   const permissionsMatrix = ref<PermissionRow[]>(
     readJSONStorage<PermissionRow[]>('auth_permissions_matrix', [
@@ -110,32 +105,15 @@ export const useAuthStore = defineStore('auth', () => {
     return level !== 'None'
   }
 
-  // Watch for changes and persist
-  watch(currentUserRole, (newRole) => {
-    writeJSONStorage('auth_current_role', newRole)
-  })
-
-  watch(permissionsMatrix, (newMatrix) => {
-    writeJSONStorage('auth_permissions_matrix', newMatrix)
-  }, { deep: true })
-
-  watch(currentType, (newType) => {
-    writeJSONStorage('auth_current_bill_type', newType)
-  })
-
-  watch(isLoggedIn, (newVal) => {
-    if (!newVal) {
-      writeStringStorage('auth_token', '')
-      writeJSONStorage('auth_user', null)
-    }
-  })
+  // watch logic removed in favor of direct updates in login/logout methods
+  // currentType is transient for the session
+  // currentUserRole is derived from user data or session storage
 
   return {
     currentUser,
     currentUserRole,
     currentType,
     isLoggedIn,
-    roles,
     permissionsMatrix,
     setRole,
     setType,

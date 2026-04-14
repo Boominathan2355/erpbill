@@ -8,15 +8,24 @@ import { useBusinessStore } from './business'
 
 export const useInvoiceStore = defineStore('invoices', () => {
   const businessStore = useBusinessStore()
-  const storageKey = `invoices_${businessStore.activeBusinessId}`
-  const invoices = ref<Invoice[]>(readJSONStorage<Invoice[]>(storageKey, []))
+  const invoices = ref<Invoice[]>([])
+  const isLoading = ref(false)
 
-  const fetchInvoices = async () => {
+  const fetchInvoices = async (force = false) => {
+    // Prevent concurrent identical requests
+    if (isLoading.value) return
+    
+    // Skip if data already present and not forced
+    if (invoices.value.length > 0 && !force) return
+
+    isLoading.value = true
     try {
       const response = await api.get('/invoices')
       invoices.value = response.data.data
     } catch (error) {
       console.error('Failed to fetch invoices:', error)
+    } finally {
+      isLoading.value = false
     }
   }
 
@@ -83,7 +92,7 @@ export const useInvoiceStore = defineStore('invoices', () => {
   }
 
   const getInvoiceById = (id: string) => {
-    return invoices.value.find(i => i.id === id)
+    return invoices.value.find(i => (i._id || i.id) === id)
   }
 
   const getNextInvoiceNumber = async () => {
@@ -96,11 +105,6 @@ export const useInvoiceStore = defineStore('invoices', () => {
       return `INV-${count.toString().padStart(3, '0')}`
     }
   }
-
-  // Persist to localStorage
-  watch(invoices, (newInvoices) => {
-    writeJSONStorage(storageKey, newInvoices)
-  }, { deep: true })
 
   return { 
     invoices, 

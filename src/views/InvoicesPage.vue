@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useInvoiceStore } from '../stores/invoices'
 import { useClientStore } from '../stores/clients'
@@ -11,6 +11,11 @@ import BaseBadge from '../components/atoms/BaseBadge.vue'
 const router = useRouter()
 const invoiceStore = useInvoiceStore()
 const clientStore = useClientStore()
+
+onMounted(() => {
+  invoiceStore.fetchInvoices()
+  clientStore.fetchClients()
+})
 
 const columns = [
   { key: 'invoiceNumber', label: 'Invoice #' },

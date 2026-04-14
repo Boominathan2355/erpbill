@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useInvoiceStore } from '../stores/invoices'
 import { useClientStore } from '../stores/clients'
 import { formatCurrency } from '../utils/formatters'
@@ -9,6 +9,11 @@ import SalesChart from '../components/organisms/SalesChart.vue'
 
 const invoiceStore = useInvoiceStore()
 const clientStore = useClientStore()
+
+onMounted(() => {
+  invoiceStore.fetchInvoices()
+  clientStore.fetchClients()
+})
 
 const totalRevenue = computed(() => 
   invoiceStore.invoices

@@ -18,13 +18,13 @@ const getSafeStorage = (): Storage => {
   if (!hasWindow) return fallback
   
   try {
-    // Check if localStorage is even defined
-    if (typeof window.localStorage === 'undefined') return fallback
+    // Check if sessionStorage is even defined
+    if (typeof window.sessionStorage === 'undefined') return fallback
 
-    const storage = window.localStorage
+    const storage = window.sessionStorage
     if (!storage) return fallback
 
-    // Test for actual usability (handles "Access to storage is not allowed")
+    // Test for actual usability
     const x = `__storage_test_${Math.random()}_`
     storage.setItem(x, x)
     const result = storage.getItem(x)
@@ -34,7 +34,7 @@ const getSafeStorage = (): Storage => {
     
     return storage
   } catch (e) {
-    console.warn('LocalStorage is blocked or unavailable. Falling back to in-memory storage.', e)
+    console.warn('SessionStorage is blocked or unavailable. Falling back to in-memory storage.', e)
     return fallback
   }
 }

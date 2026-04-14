@@ -1,26 +1,46 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useUserStore } from '../stores/users'
 import BaseButton from '../components/atoms/BaseButton.vue'
 import BaseInput from '../components/atoms/BaseInput.vue'
 import AppTable from '../components/organisms/AppTable.vue'
 import AppModal from '../components/organisms/AppModal.vue'
 
+const userStore = useUserStore()
 const searchQuery = ref('')
 const showSyncModal = ref(false)
 const showCreateAdminModal = ref(false)
+const showEditModal = ref(false)
+const editingUser = ref<any>(null)
 
 const columns = [
-  { key: 'name', label: 'Name' },
-  { key: 'email', label: 'Email / Username' },
+  { key: 'name', label: 'UserName' },
   { key: 'role', label: 'Assigned Role' },
   { key: 'source', label: 'Auth Source' },
   { key: 'status', label: 'Status' }
 ]
 
-const usersData = ref([
-  { id: 1, name: 'System Admin', email: 'admin@billsoft.com', role: 'Super Admin', source: 'Local DB', status: 'Active' },
-  { id: 2, name: 'John Doe', email: 'john.d@clientcorp.ld', role: 'Client Admin (TechCorp)', source: 'Active Directory (LDAP)', status: 'Active' }
-])
+onMounted(() => {
+  userStore.fetchUsers()
+})
+
+const handleEdit = (user: any) => {
+  editingUser.value = { ...user }
+  showEditModal.value = true
+}
+
+const handleUpdate = async () => {
+  if (editingUser.value) {
+    await userStore.updateUser(editingUser.value._id || editingUser.value.id, editingUser.value)
+    showEditModal.value = false
+  }
+}
+
+const handleDelete = async (id: string) => {
+  if (confirm('Are you sure you want to delete this user?')) {
+    await userStore.deleteUser(id)
+  }
+}
 </script>
 
 <template>
@@ -40,10 +60,10 @@ const usersData = ref([
       <BaseInput v-model="searchQuery" placeholder="Search by name, email, or role..." icon="users" />
     </div>
 
-    <AppTable :columns="columns" :data="usersData">
+    <AppTable :columns="columns" :data="userStore.users" :loading="userStore.isLoading">
       <template #actions="{ row }">
-        <BaseButton variant="ghost" size="sm" icon="edit" />
-        <BaseButton variant="ghost" size="sm" icon="trash" />
+        <BaseButton variant="ghost" size="sm" icon="edit" @click="handleEdit(row)" />
+        <BaseButton variant="ghost" size="sm" icon="trash" @click="handleDelete(row._id || row.id)" />
       </template>
     </AppTable>
     
@@ -83,6 +103,31 @@ const usersData = ref([
            <select class="form-select">
               <option>Client Admin (Full Tenant Access)</option>
               <option>Finance Manager</option>
+           </select>
+        </div>
+      </div>
+    </AppModal>
+
+    <!-- Edit User Modal -->
+    <AppModal 
+      :show="showEditModal" 
+      title="Edit System User" 
+      @close="showEditModal = false" 
+      @confirm="handleUpdate"
+    >
+      <div v-if="editingUser" class="form-grid mb-3">
+        <BaseInput v-model="editingUser.name" label="Full Name" placeholder="Jane Smith" />
+        <BaseInput v-model="editingUser.email" label="Email" type="email" placeholder="jane@acme.com" />
+        <div class="mb-3 w-100">
+           <label class="form-label fw-semibold">Role</label>
+           <select v-model="editingUser.role" class="form-select">
+              <optgroup label="System Roles">
+                <option value="Super Admin">Super Admin (System)</option>
+              </optgroup>
+              <optgroup label="Tenant Roles">
+                <option value="Client Admin">Client Admin (Tenant)</option>
+                <option value="Finance Agent">Finance Agent</option>
+              </optgroup>
            </select>
         </div>
       </div>

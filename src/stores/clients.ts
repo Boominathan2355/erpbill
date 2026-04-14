@@ -8,15 +8,24 @@ import { useBusinessStore } from './business'
 // Store for managing client entities
 export const useClientStore = defineStore('clients', () => {
   const businessStore = useBusinessStore()
-  const storageKey = `clients_${businessStore.activeBusinessId}`
-  const clients = ref<Client[]>(readJSONStorage<Client[]>(storageKey, []))
+  const clients = ref<Client[]>([])
+  const isLoading = ref(false)
 
-  const fetchClients = async () => {
+  const fetchClients = async (force = false) => {
+    // If already loading, don't start a new request
+    if (isLoading.value) return
+    
+    // If already have data and not forced, skip
+    if (clients.value.length > 0 && !force) return
+
+    isLoading.value = true
     try {
       const response = await api.get('/clients')
       clients.value = response.data.data
     } catch (error) {
       console.error('Failed to fetch clients:', error)
+    } finally {
+      isLoading.value = false
     }
   }
 
@@ -49,12 +58,6 @@ export const useClientStore = defineStore('clients', () => {
       console.error('Failed to delete client:', error)
     }
   }
-
-  // We still keep the watch for local caching if needed, 
-  // but it's secondary to the API now.
-  watch(clients, (newClients) => {
-    writeJSONStorage(storageKey, newClients)
-  }, { deep: true })
 
   return { clients, fetchClients, addClient, updateClient, deleteClient: deleteClientById }
 })
